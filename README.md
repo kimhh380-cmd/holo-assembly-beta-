@@ -18,7 +18,7 @@
 3. AI가 먼저 계획을 보여 주면, 괜찮은지 보고 “좋아, 코드 써 줘”라고 합니다.
 4. 받은 파일을 이 폴더에 넣습니다.
    - `js/ext/…lab.js`와 `docs/ext-….md`
-   - 이미지는 `assets/engines/`
+   - 카드 그림은 `assets/cards/`
 5. `index.html`의 주석 처리된 줄(`<!-- <script src="js/ext/…"> -->`)에서 그 모듈의 `<!--`와 `-->`를 지우면 켜집니다.
 6. 브라우저로 열어 확인합니다. 오류가 나면 F12 콘솔의 빨간 글씨를 그 AI에게 그대로 보여 주세요.
 7. 세 모듈이 모이면 Claude에게 파일들을 올려 주세요. 합치고, 충돌을 고치고, 웹에 올려 드려요.
@@ -63,7 +63,7 @@ CLAUDE.md, GEMINI.md AGENTS.md를 가리키는 짧은 파일
 prompts/             AI별 작업 지시서 (GPT·Gemini·Grok·공통)
 docs/api.md          확장 모듈 API(HOLO)
 js/12-api.js, js/99-boot.js, js/ext/_template.js  확장 API·시작·견본 모듈
-assets/engines/      엔진 카드 이미지 넣는 곳
+assets/cards/        카드 그림(PNG, 파일 이름 = 카드 id) — Grok이 그린 그림
 docs/data-format.md  카드·부품 JSON 형식
 docs/physics.md      시험 공식과 가정
 examples/example-cards.json  가져오기 예시

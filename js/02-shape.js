@@ -33,11 +33,13 @@ function shapeSvg(s, col, W = 100, H = 60) {
  for (let i = 24; i >= 0; i--) { const u = i / 24; pts.push(`${(cx + rf(u)).toFixed(1)},${(by - u * h).toFixed(1)}`); }
  return `<svg viewBox="0 0 ${W} ${H}"><polygon points="${pts.join(' ')}" fill="${col || 'rgba(63,240,255,.14)'}" fill-opacity=".55" stroke="#3ff0ff" stroke-width="1.6" stroke-linejoin="round"/></svg>`;
 }
-function icon(c) {
+// 카드 그림: 기본 카드는 assets/cards/<id>.png가 있고 CARD_ART에 id가 있으면 그 그림을, 없으면 아래 SVG를 보여 줌. 내 카드는 c.img(데이터 URL)
+const cardImgSrc = c => c ? (c.img || (!c.custom && CARD_ART.has(c.id) ? `assets/cards/${c.id}.png` : null)) : null;
+function icon(c) { const src = cardImgSrc(c), svg = iconSvg(c); return src ? `<span class="ic">${svg}<img src="${esc(src)}" alt="" loading="lazy" onload="this.parentNode.classList.add('has')" onerror="this.remove()"></span>` : svg; }
+function iconSvg(c) {
  const s = 'stroke="#3ff0ff" stroke-width="2" fill="rgba(63,240,255,.12)"';
- if (c.img) return `<img src="${esc(c.img)}" alt="" loading="lazy">`;
  if (c.cat === 'st') { const d = 2, sh = c.custom ? c.part.shape : { prof: c.sh.prof, h: c.sh.hr * d, d0: d, d1: c.sh.d1r != null ? c.sh.d1r * d : d, dm: (c.sh.dmr || 1) * d, k: c.sh.k, sp: c.sh.sp }; return shapeSvg(sh, c.custom && c.part.fuel ? FUEL_OF(c.part.fuel) : c.custom && c.part.tps ? CARD[c.part.tps].col : null); }
- if (c.kind === 'engine') { const w = 10 + c.noz * 14, col = FUEL_OF(c.fuel); return `<span class="ic"><svg viewBox="0 0 100 60"><rect x="44" y="4" width="12" height="12" ${s}/><path d="M46 16C46 26 ${50 - w} 40 ${50 - w} 54H${50 + w}C${50 + w} 40 54 26 54 16z" ${s}/><ellipse cx="50" cy="55" rx="${w}" ry="3" fill="${col}" opacity=".8"/></svg><img src="assets/engines/${esc(c.id)}.png" alt="" loading="lazy" onload="this.parentNode.classList.add('has')" onerror="this.remove()"></span>`; }
+ if (c.kind === 'engine') { const w = 10 + c.noz * 14, col = FUEL_OF(c.fuel); return `<svg viewBox="0 0 100 60"><rect x="44" y="4" width="12" height="12" ${s}/><path d="M46 16C46 26 ${50 - w} 40 ${50 - w} 54H${50 + w}C${50 + w} 40 54 26 54 16z" ${s}/><ellipse cx="50" cy="55" rx="${w}" ry="3" fill="${col}" opacity=".8"/></svg>`; }
  if (c.kind === 'tps') { const pat = c.pat === 'hex' ? [0, 1, 2, 3].map(i => [0, 1, 2].map(j => `<path d="M${30 + i * 12 + (j % 2) * 6} ${16 + j * 11}l5 -3 5 3 0 6 -5 3 -5 -3z" fill="${c.col}" stroke="#3ff0ff" stroke-width="1"/>`).join('')).join('') : `<rect x="28" y="12" width="44" height="36" rx="4" fill="${c.col}" stroke="#3ff0ff" stroke-width="1.5"/>`; return `<svg viewBox="0 0 100 60">${pat}</svg>`; }
  if (c.kind === 'fuel') { const col = FUEL_OF(c.id); return `<svg viewBox="0 0 100 60"><path d="M50 6C60 22 66 30 66 40A16 16 0 0 1 34 40C34 30 40 22 50 6z" fill="${col}" fill-opacity=".55" stroke="${col}" stroke-width="2"/></svg>`; }
  if (c.id === 'gridfin') return `<svg viewBox="0 0 100 60"><rect x="30" y="16" width="40" height="28" fill="none" stroke="#3ff0ff" stroke-width="2"/><path d="M38 16V44M46 16V44M54 16V44M62 16V44M30 23H70M30 30H70M30 37H70" stroke="#3ff0ff" stroke-width="1" opacity=".7"/></svg>`;

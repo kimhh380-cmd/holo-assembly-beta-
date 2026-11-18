@@ -44,7 +44,7 @@ js/11-input.js      카드 끌어 놓기, 캔버스 선택·회전
 js/12-api.js        확장 모듈용 공개 API 객체 HOLO (시험·카드·패널·그리기 훅·저장 공간 등록)
 js/ext/             확장 모듈 폴더 — 다른 AI는 여기에 자기 파일만 만든다 (_template.js가 견본)
 js/99-boot.js       앱 시작(load → renderDeck → frame). 확장 모듈이 다 등록된 뒤 실행
-assets/engines/     엔진 카드 이미지(PNG)
+assets/cards/       카드 그림(PNG). 파일 이름 = 카드 id (예: raptor.png). 있으면 자동으로 카드에 표시
 examples/example-cards.json   “파일 가져오기”로 바로 읽히는 카드·기체 예시
 docs/data-format.md           카드·부품 JSON 형식 (다른 AI가 부품을 설계해 줄 때 사용)
 docs/physics.md               시험에 쓰인 공식과 가정
@@ -114,6 +114,7 @@ prompts/                      GPT·Gemini·Grok에게 줄 작업 지시서
 - **휴대폰:** 400px 폭에서도 깨지지 않아야 합니다. 760px 이하에서는 투사대가 위, 패널이 아래로 갑니다.
 - **문구:** 짧고 친절한 존댓말을 씁니다. 예: “카드를 끼웠어요”.
 - **이모지:** 쓰지 않습니다.
+- **카드 그림은 Grok 스타일로 통일합니다.** 어두운 남색 배경(#050b14), 청록 홀로그램 와이어프레임, 정사각형, 글자 없음. `assets/cards/<카드id>.png`(256px)에 두고 `js/01-data.js`의 `CARD_ART`에 id를 넣으면 기본 카드에 나오고, 내 카드는 덱의 “그림 넣기”로 넣습니다. 그림 목록과 지시문은 `prompts/4-Grok-카드-그림.md`에 있습니다.
 - **움직임 줄이기:** `prefers-reduced-motion`이 켜져 있으면 애니메이션을 끕니다(`RM`).
 
 ## 8. 작업 규칙 (여러 AI가 함께 고칠 때)
@@ -139,7 +140,7 @@ prompts/                      GPT·Gemini·Grok에게 줄 작업 지시서
 |---|---|---|---|
 | ChatGPT | 구조 시험을 시뮬레이션으로 (기본 압력·압축·굽힘·진동 대체 가능, 새 구조 시험 추가) | `js/ext/structure-lab.js`, `docs/ext-structure.md` | `st_` · 저장 키 `structure` · cfg 키 `st_…` |
 | Gemini | 단열재 실험 (단열재 카드 설계, 플라즈마 시험 대체 가능, 극저온·열진공 등 새 시험) | `js/ext/insulation-lab.js`, `docs/ext-insulation.md` | `tp_` · 저장 키 `insulation` · cfg 키 `tp_…` |
-| Grok | 엔진 설계·연소 시험·엔진 이미지 | `js/ext/engine-lab.js`, `docs/ext-engine.md`, `assets/engines/*.png` | `en_` · 저장 키 `engine` · cfg 키 `en_…` |
+| Grok | 엔진 설계·연소 시험·엔진 이미지 | `js/ext/engine-lab.js`, `docs/ext-engine.md`, `assets/cards/*.png` (모든 카드 그림) | `en_` · 저장 키 `engine` · cfg 키 `en_…` |
 | Claude | 핵심 파일 관리, 세 모듈 합치기, 오류 수정, API 추가, 게시 | 핵심 파일 전부 | — |
 
 - **겹치지 않게 하는 약속:** 각 AI는 자기 파일만 만듭니다. 기본 시험을 대체할 때는 같은 id로 `registerTest`를 합니다. 예: GPT가 `'press'`, Gemini가 `'plasma'`.
@@ -160,7 +161,8 @@ prompts/                      GPT·Gemini·Grok에게 줄 작업 지시서
 
 ## CHANGELOG
 
+- 2026-11-18 · Claude · 모든 카드에 그림 지원 (기본 카드 assets/cards/<id>.png 자동 표시, 내 카드 “그림 넣기”, 편집 패널 머리에 썸네일), 엔진 그림을 assets/cards로 이동, Grok 카드 그림 지시서 추가
 - 2026-11-18 · Gemini + Claude · 단열재 실험 모듈 추가 (Gemini의 다층 열물리 엔진 holo_tps.js를 Claude가 HOLO API에 연결: 다층 단열재 설계 패널, 다층 아크젯·극저온·열진공 시험, 단열재 카드 저장). docs/ext-insulation.md
-- 2026-11-18 · Grok + Claude · 엔진 카드 이미지 8장 추가 (assets/engines, 256px로 축소), 이미지가 있으면 카드에 표시
+- 2026-11-18 · Grok + Claude · 엔진 카드 이미지 8장 추가 (assets/cards, 256px로 축소), 이미지가 있으면 카드에 표시
 - 2026-11-18 · Claude · 확장 모듈 API(HOLO, js/12-api.js) 추가, 부팅을 99-boot.js로 분리, 모든 카테고리의 내 카드·이미지 카드 지원, 세 AI 분담표와 작업 지시서 작성
 - 2026-11-18 · Claude · 카드·홀로그램 조립 방식으로 전면 개편, 구조 설계(모양 7종·치수), 내 카드·내 기체 저장, 작업대 모드, 재질·성질, 구조 시험 5종, 파일을 역할별 11개로 분리, 이 안내서 작성

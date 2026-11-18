@@ -77,7 +77,7 @@
 - `HOLO.registerCard(def)`: 기본 카드를 추가하거나 대체합니다(같은 id면 대체). `cat`은 `st` `en` `tp` `fu` `at` 중 하나입니다.
   - **엔진** (`cat:'en'`, `kind:'engine'`): `fuel`(FUELC 키), `noz`(노즐 길이 계수, 0.8~1.7), `m`(질량 t), `vac`(진공형이면 true)가 필요합니다. 그 밖의 설계값은 자유롭게 더해도 됩니다.
   - **단열재** (`cat:'tp'`, `kind:'tps'`): `col`, `pat`(`hex` `speck` `dots` `quilt` `none` `sheen` `weave`), `tk`(W/m·K), `trho`(kg/m³), `tcp`, `tT`(°C 한계), `teps`, `tdef`(기본 두께 mm)가 필요합니다. 삭마 재료면 `abl:true, tA, Qs`도 넣습니다.
-  - **이미지:** `img: 'assets/engines/raptor.png'`를 넣으면 아이콘 대신 이미지가 보입니다.
+  - **그림:** 기본 카드는 `assets/cards/<카드id>.png`가 있고 `CARD_ART`(js/01-data.js)에 id가 있으면 그 그림이 나옵니다. 확장 모듈은 `HOLO.data`가 아니라 카드의 `img`로 지정하세요. 다른 경로를 쓰려면 `img: '경로 또는 데이터 URL'`을 넣으세요. 내 카드(`saveCustomCard`)에도 `img`를 넣을 수 있습니다.
 - `HOLO.saveCustomCard(card)`: 사용자가 만든 카드를 "내 카드"로 저장합니다. 덱의 해당 카테고리 맨 앞에 나오고, localStorage와 파일 내보내기에 포함됩니다. 반환값은 id입니다.
 - `HOLO.removeCustomCard(id)`
 - `HOLO.registerMaterial(id, { name, rho, E, Sy, Su, Tmax, k, cp, eps, cryo, note })`: 구조 재질을 추가합니다.

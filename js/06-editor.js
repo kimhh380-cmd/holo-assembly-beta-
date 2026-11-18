@@ -24,7 +24,8 @@ function renderEditor() {
  const pf = PFIELDS.filter(f => !f.tps || p.tps).map(f => fldHtml(f, p[f.k], f.l, 'pf')).join('');
  const mid = MATS[p.mat.id] ? p.mat.id : 'custom';
  const vt = visTests(p); if (!vt.some(([k]) => k === S.tkind) && vt.length) S.tkind = vt[0][0];
- ed.innerHTML = `<div class="edhead"><h2>${bench ? '부품 작업대' : '부품 편집'}</h2><small>${bench ? '이 부품만 띄워 놓고 설계해요' : '기체에 끼워진 부품이에요'}</small></div>
+ const thumb = cardImgSrc(CARD[p.from] || CARD[p.card]);
+ ed.innerHTML = `<div class="edhead">${thumb ? `<img class="edthumb" src="${esc(thumb)}" alt="" onerror="this.remove()">` : ''}<h2>${bench ? '부품 작업대' : '부품 편집'}</h2><small>${bench ? '이 부품만 띄워 놓고 설계해요' : '기체에 끼워진 부품이에요'}</small></div>
   <label class="row"><span>이름</span><input id="edName" value="${esc(p.name)}" maxlength="30"></label>
   <label class="row"><span>역할</span><select id="edRole">${Object.entries(ROLES).map(([k, l]) => `<option value="${k}" ${p.role === k ? 'selected' : ''}>${l}</option>`).join('')}</select></label>
   <details data-open="shape" ${S.open.shape ? 'open' : ''}><summary>모양·크기 <small style="color:var(--mut);font-weight:400">${shapeName(s)} · ${m1(s.h)} m</small></summary>

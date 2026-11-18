@@ -40,14 +40,15 @@ header p{margin:0;color:var(--mut);font-size:13px;flex:1 1 240px}
 .card b{display:block;font-size:13.5px;line-height:1.3;margin-top:4px;color:#f0fdff}
 .card small{display:block;color:var(--mut);font-size:12px;line-height:1.35;margin-top:2px}
 .cbtn{position:absolute;top:6px;z-index:2;border:1px solid #6b5a2a;background:#1a1408;border-radius:999px;font-size:12px;padding:1px 8px;cursor:pointer}
-.cbtn.del{right:6px}.cbtn.edt{left:6px}
+.cbtn.del{right:6px}.cbtn.edt{left:6px}.cbtn.pic{left:6px;top:30px}.cbtn.pic.top{top:6px}
+.edthumb{width:52px;height:52px;border-radius:8px;box-shadow:0 0 12px rgba(63,240,255,.25);align-self:center}
 .cbtn.arm{background:var(--warn);border-color:var(--warn);color:#fff}
 .dots{display:flex;gap:3px;margin-top:5px}
 .dots i{width:16px;height:5px;border-radius:3px;background:#1d3346}
 .dots i.ok{background:var(--ok)}.dots i.no{background:var(--warn)}
 .deck .hint{margin:0;padding:8px 12px 12px;color:var(--mut);font-size:12.5px;border-top:1px solid var(--line)}
 .editor{flex:1;overflow:auto;padding:4px 14px 18px}
-.edhead{display:flex;align-items:baseline;gap:8px;margin:4px 0 8px}
+.edhead{display:flex;align-items:baseline;gap:8px;margin:4px 0 8px;flex-wrap:wrap}
 .edhead h2{font-size:16px;margin:0;color:var(--sel)}
 .edhead small{color:var(--mut);font-size:12.5px}
 details{border-top:1px solid var(--line);padding:8px 0}

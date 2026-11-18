@@ -19,6 +19,7 @@ CARDS_EL.addEventListener('pointerdown', e => {
 CARDS_EL.addEventListener('click', e => {
  if (e.target.closest('[data-new]')) return newPart();
  const ec = e.target.closest('[data-editcard]'); if (ec) { e.stopPropagation(); return editCard(ec.dataset.editcard); }
+ const pc = e.target.closest('[data-piccard]'); if (pc) { e.stopPropagation(); return pickCardImage(pc.dataset.piccard); }
  const b = e.target.closest('[data-delcard]'); if (!b) return; e.stopPropagation(); if (!b.classList.contains('arm')) { b.classList.add('arm'); b.textContent = '정말 지울까요?'; setTimeout(() => { if (b.isConnected) { b.classList.remove('arm'); b.textContent = '지우기'; } }, 2500); return; }
  const id = b.dataset.delcard; S.custom = S.custom.filter(c => c.id !== id); S.parts.forEach(p => { if (p.from === id) p.from = null; }); if (S.bench && S.bench.from === id) S.bench.from = null; rebuildCards(); save(); renderDeck(); toast('카드를 지웠어요 · 이미 끼운 부품은 그대로예요'); });
 CARDS_EL.addEventListener('keydown', e => { if (e.key !== 'Enter' && e.key !== ' ') return; if (e.target.closest('.cbtn')) return; if (e.target.closest('[data-new]')) { e.preventDefault(); return newPart(); } const el = e.target.closest('[data-card]'); if (el) { e.preventDefault(); apply(el.dataset.card, null, null); } });
@@ -31,3 +32,12 @@ cv.addEventListener('pointerdown', e => { const sx = e.clientX, r0 = S.rot; let 
  cv.addEventListener('pointermove', mv); cv.addEventListener('pointerup', up); });
 cv.addEventListener('pointermove', e => { if (!S.drag) S.hover = isSolo() ? null : hitPart(e.clientX, e.clientY); cv.style.cursor = S.hover ? 'pointer' : 'grab'; });
 cv.addEventListener('pointerleave', () => { S.hover = null; });
+// 내 카드에 그림 넣기: 고른 이미지를 256px 정사각형으로 줄여 카드에 저장 (Grok 등으로 만든 그림)
+function pickCardImage(id) {
+ const c = S.custom.find(q => q.id === id); if (!c) return; const inp = document.createElement('input'); inp.type = 'file'; inp.accept = 'image/*';
+ inp.onchange = () => { const f = inp.files[0]; if (!f) return; const img = new Image(), url = URL.createObjectURL(f);
+  img.onload = () => { const N = 256, cv2 = document.createElement('canvas'); cv2.width = cv2.height = N; const g = cv2.getContext('2d'); g.fillStyle = '#050b14'; g.fillRect(0, 0, N, N); const k = Math.min(N / img.width, N / img.height), w = img.width * k, h = img.height * k; g.drawImage(img, (N - w) / 2, (N - h) / 2, w, h); URL.revokeObjectURL(url);
+   c.img = cv2.toDataURL('image/jpeg', 0.86); rebuildCards(); save(); renderDeck(); toast(`‘${c.name}’ 카드에 그림을 넣었어요`); };
+  img.onerror = () => toast('이 파일은 그림으로 읽을 수 없어요'); img.src = url; };
+ inp.click();
+}
