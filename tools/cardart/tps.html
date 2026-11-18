@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><style>html,body{margin:0;background:#050b14}canvas{display:block}</style></head>
+<body><canvas id="c" width="512" height="512"></canvas>
+<script>
+// 단열재 카드 그림 생성기 — 곡면 패널을 비스듬히 본 홀로그램 렌더 (Grok 엔진 그림 스타일)
+const cv = document.getElementById('c'), x = cv.getContext('2d'), N = 512;
+const CY = [63, 240, 255];
+let seed = 7; const rnd = () => (seed = seed * 16807 % 2147483647) / 2147483647;
+const hash = (i, j, k = 0) => { let h = i * 374761393 + j * 668265263 + k * 2147483647; h = (h ^ (h >> 13)) * 1274126177; return ((h ^ (h >> 16)) >>> 0) / 4294967295; };
+const smooth = t => t * t * (3 - 2 * t);
+function vnoise(u, v, k) { const i = Math.floor(u), j = Math.floor(v), fu = smooth(u - i), fv = smooth(v - j); const a = hash(i, j, k), b = hash(i + 1, j, k), c = hash(i, j + 1, k), d = hash(i + 1, j + 1, k); return a + (b - a) * fu + (c - a) * fv + (a - b - c + d) * fu * fv; }
+const fbm = (u, v, k = 0) => vnoise(u, v, k) * 0.55 + vnoise(u * 2.1, v * 2.1, k + 9) * 0.28 + vnoise(u * 4.3, v * 4.3, k + 19) * 0.17;
+
+// 패널 형상: 반지름 R의 원통 곡면 조각, 두께 TH
+const R = 1.55, TH0 = 0.34, A0 = 0.78, HH = 1.22;
+const YAW = -0.58, PITCH = 0.34, D = 6.6, F = 880;
+function rot([X, Y, Z]) { const cy = Math.cos(YAW), sy = Math.sin(YAW), cp = Math.cos(PITCH), sp = Math.sin(PITCH); let x1 = X * cy + Z * sy, z1 = -X * sy + Z * cy; let y2 = Y * cp - z1 * sp, z2 = Y * sp + z1 * cp; return [x1, y2, z2]; }
+function proj(p) { const [X, Y, Z] = rot(p), k = F / (D - Z); return [N / 2 + X * k - 4, N * 0.5 - Y * k, Z]; }
+// s: 0~1 가로(각도), t: 0~1 세로, d: 0 바깥면 ~ 1 안쪽면
+function P(s, t, d = 0, bump = 0) { const th = (s - 0.5) * 2 * A0, r = R - d * TH0 + bump; return [r * Math.sin(th), (t - 0.5) * 2 * HH, r * Math.cos(th) - R]; }
+function normal(s) { const th = (s - 0.5) * 2 * A0; return rot([Math.sin(th), 0, Math.cos(th)]); }
+const L = (() => { const v = [-0.45, 0.6, 0.66], m = Math.hypot(...v); return v.map(q => q / m); })();
+
+function background() {
+ x.fillStyle = '#050b14'; x.fillRect(0, 0, N, N);
+ const g = x.createRadialGradient(N / 2, N * 0.5, 10, N / 2, N * 0.5, N * 0.7); g.addColorStop(0, 'rgba(18,60,85,.45)'); g.addColorStop(1, 'rgba(5,11,20,0)'); x.fillStyle = g; x.fillRect(0, 0, N, N);
+ x.save(); x.strokeStyle = 'rgba(63,240,255,.035)'; x.lineWidth = 1; for (let i = 0; i <= N; i += 32) { x.beginPath(); x.moveTo(i, 0); x.lineTo(i, N); x.stroke(); x.beginPath(); x.moveTo(0, i); x.lineTo(N, i); x.stroke(); }
+ x.globalCompositeOperation = 'lighter'; seed = 11; for (let i = 0; i < 90; i++) { const px = rnd() * N, py = rnd() * N, a = rnd() * 0.45; x.fillStyle = `rgba(63,240,255,${a})`; x.fillRect(px, py, 1.3, 1.3); } x.restore();
+}
+function scan() { x.save(); x.fillStyle = 'rgba(63,240,255,.025)'; for (let y = 0; y < N; y += 3) x.fillRect(0, y, N, 1); x.restore(); }
+function glowLine(pts, a = 0.9, w = 1.2, col = CY) { if (pts.length < 2) return; x.save(); x.globalCompositeOperation = 'lighter'; x.lineJoin = 'round'; x.lineCap = 'round';
+ const path = () => { x.beginPath(); pts.forEach((q, i) => i ? x.lineTo(q[0], q[1]) : x.moveTo(q[0], q[1])); };
+ path(); x.strokeStyle = `rgba(${col},${a * 0.16})`; x.lineWidth = w * 5; x.stroke(); path(); x.strokeStyle = `rgba(${col},${a * 0.35})`; x.lineWidth = w * 2.4; x.stroke(); path(); x.strokeStyle = `rgba(${col},${a})`; x.lineWidth = w; x.stroke(); x.restore(); }
+const curveS = (t, d = 0, s0 = 0, s1 = 1, n = 40, b = 0) => Array.from({ length: n + 1 }, (_, i) => proj(P(s0 + (s1 - s0) * i / n, t, d, b)));
+const curveT = (s, d = 0, t0 = 0, t1 = 1, n = 30, b = 0) => Array.from({ length: n + 1 }, (_, i) => proj(P(s, t0 + (t1 - t0) * i / n, d, b)));
+function quad(a, b, c, d, fill) { x.beginPath(); x.moveTo(a[0], a[1]); x.lineTo(b[0], b[1]); x.lineTo(c[0], c[1]); x.lineTo(d[0], d[1]); x.closePath(); x.fillStyle = fill; x.fill(); }
+
+// 면을 잘게 나눠 재질 색으로 칠함 (tex(s,t) → [r,g,b,a, bump])
+function surface(tex, NU = 90, NV = 70, depth = 0) {
+ for (let i = 0; i < NU; i++) for (let j = 0; j < NV; j++) {
+  const s0 = i / NU, s1 = (i + 1) / NU, t0 = j / NV, t1 = (j + 1) / NV, sc = (s0 + s1) / 2, tc = (t0 + t1) / 2, c = tex(sc, tc), b = c[4] || 0;
+  const n = normal(sc), lit = 0.35 + 0.65 * Math.max(0, n[0] * L[0] + n[1] * L[1] + n[2] * L[2]) + b * 1.4;
+  const r = Math.min(255, c[0] * lit), g = Math.min(255, c[1] * lit), bl = Math.min(255, c[2] * lit);
+  quad(proj(P(s0, t0, depth)), proj(P(s1, t0, depth)), proj(P(s1, t1, depth)), proj(P(s0, t1, depth)), `rgba(${r | 0},${g | 0},${bl | 0},${c[3]})`);
+ }
+}
+function holoTint() { // 몸 전체에 청록 홀로그램 막
+ x.save(); x.globalCompositeOperation = 'lighter'; const pts = curveS(1).concat(curveS(0).reverse()); x.beginPath(); pts.forEach((q, i) => i ? x.lineTo(q[0], q[1]) : x.moveTo(q[0], q[1])); x.closePath();
+ const g = x.createLinearGradient(140, 120, 380, 400); g.addColorStop(0, 'rgba(63,240,255,.16)'); g.addColorStop(0.5, 'rgba(63,240,255,.04)'); g.addColorStop(1, 'rgba(63,240,255,.12)'); x.fillStyle = g; x.fill(); x.restore(); }
+// 두께(옆면·아랫면)
+function sides(col, layers) {
+ const TH = TH0; layers = layers || [[0, 1, col]];
+ for (const [d0, d1, c] of layers) {
+  // 아랫면 (t=0)
+  for (let i = 0; i < 40; i++) { const s0 = i / 40, s1 = (i + 1) / 40; quad(proj(P(s0, 0, d0)), proj(P(s1, 0, d0)), proj(P(s1, 0, d1)), proj(P(s0, 0, d1)), c); }
+  // 오른쪽 면 (s=1)
+  for (let j = 0; j < 30; j++) { const t0 = j / 30, t1 = (j + 1) / 30; quad(proj(P(1, t0, d0)), proj(P(1, t1, d0)), proj(P(1, t1, d1)), proj(P(1, t0, d1)), c); }
+ }
+ glowLine(curveS(0, 1), 0.5, 1); glowLine(curveT(1, 1), 0.5, 1); glowLine([proj(P(1, 0, 0)), proj(P(1, 0, 1))], 0.8, 1.2); glowLine([proj(P(0, 0, 0)), proj(P(0, 0, 1))], 0.6, 1); glowLine([proj(P(1, 1, 0)), proj(P(1, 1, 1))], 0.6, 1);
+}
+function frame(gridA = 0.22) { // 바깥 테두리 + 얇은 격자 + 두께 쪽 격자
+ for (let i = 1; i < 24; i++) glowLine(curveT(i / 24), gridA * (i % 4 ? 0.35 : 0.8), 0.55);
+ for (let j = 1; j < 20; j++) glowLine(curveS(j / 20), gridA * (j % 4 ? 0.35 : 0.8), 0.55);
+ for (let k = 1; k < 4; k++) { glowLine(curveT(1, k / 4), 0.25, 0.5); glowLine(curveS(0, k / 4), 0.25, 0.5); }
+ for (let i = 0; i <= 12; i++) glowLine([proj(P(i / 12, 0, 0)), proj(P(i / 12, 0, 1))], 0.3, 0.5);
+ for (let j = 0; j <= 10; j++) glowLine([proj(P(1, j / 10, 0)), proj(P(1, j / 10, 1))], 0.3, 0.5);
+ glowLine(curveS(0), 1, 1.5); glowLine(curveS(1), 1, 1.5); glowLine(curveT(0), 1, 1.5); glowLine(curveT(1), 1, 1.5);
+ // 모서리 고정 볼트
+ for (const [s, t] of [[0.04, 0.05], [0.96, 0.05], [0.04, 0.95], [0.96, 0.95]]) { const p = proj(P(s, t)); x.save(); x.globalCompositeOperation = 'lighter'; x.strokeStyle = 'rgba(63,240,255,.9)'; x.lineWidth = 1.2; x.beginPath(); x.arc(p[0], p[1], 4, 0, Math.PI * 2); x.stroke(); x.fillStyle = 'rgba(63,240,255,.35)'; x.fill(); x.restore(); }
+}
+// 표면 위 (s,t) 다각형을 따라 선 긋기
+const polyST = (pts, d = 0, b = 0) => pts.map(([s, t]) => proj(P(s, t, d, b)));
+const SW = 2 * A0 * R, SH = 2 * HH;
+function contour(fn, lev, NU = 90, NV = 70, a = 0.4, w = 0.7, col = CY, s0 = 0, s1 = 1, t0 = 0, t1 = 1) {
+ const v = []; for (let i = 0; i <= NU; i++) { v[i] = []; for (let j = 0; j <= NV; j++) v[i][j] = fn(s0 + (s1 - s0) * i / NU, t0 + (t1 - t0) * j / NV) - lev; }
+ const S = i => s0 + (s1 - s0) * i / NU, T = j => t0 + (t1 - t0) * j / NV, segs = [];
+ const lerp = (i0, j0, i1, j1) => { const a0 = v[i0][j0], a1 = v[i1][j1], k = a0 / (a0 - a1); return [S(i0) + (S(i1) - S(i0)) * k, T(j0) + (T(j1) - T(j0)) * k]; };
+ for (let i = 0; i < NU; i++) for (let j = 0; j < NV; j++) { const e = []; const c = [[i, j], [i + 1, j], [i + 1, j + 1], [i, j + 1]];
+  for (let k = 0; k < 4; k++) { const [a0, b0] = c[k], [a1, b1] = c[(k + 1) % 4]; if ((v[a0][b0] > 0) !== (v[a1][b1] > 0)) e.push(lerp(a0, b0, a1, b1)); }
+  if (e.length >= 2) segs.push([e[0], e[1]]); if (e.length === 4) segs.push([e[2], e[3]]); }
+ x.save(); x.globalCompositeOperation = 'lighter'; x.lineCap = 'round';
+ for (const [lw, la] of [[w * 3.5, a * 0.18], [w, a]]) { x.beginPath(); for (const [p, q] of segs) { const A = proj(P(p[0], p[1])), B = proj(P(q[0], q[1])); x.moveTo(A[0], A[1]); x.lineTo(B[0], B[1]); } x.strokeStyle = `rgba(${col},${la})`; x.lineWidth = lw; x.stroke(); }
+ x.restore();
+} // 표면 실제 가로·세로 길이
+
+const MATS = {
+ hex() {
+  surface((s, t) => { const n = fbm(s * 30, t * 30, 3); return [22 + n * 18, 26 + n * 18, 32 + n * 22, 0.95]; });
+  sides('rgba(200,210,220,.55)', [[0, 0.75, 'rgba(225,232,238,.55)'], [0.75, 1, 'rgba(63,240,255,.18)']]);
+  holoTint();
+  // 육각 타일
+  const a = 0.105, w = Math.sqrt(3) * a; for (let row = -1; row * a * 1.5 < SH + a; row++) for (let col = -1; col * w < SW + w; col++) {
+   const cx = col * w + (row % 2 ? w / 2 : 0), cy = row * a * 1.5, pts = [];
+   for (let k = 0; k <= 6; k++) { const an = Math.PI / 6 + k * Math.PI / 3; const sx = (cx + Math.cos(an) * a * 0.9) / SW, ty = (cy + Math.sin(an) * a * 0.9) / SH; pts.push([Math.min(1, Math.max(0, sx)), Math.min(1, Math.max(0, ty))]); }
+   const ctr = [cx / SW, cy / SH]; if (ctr[0] < -0.02 || ctr[0] > 1.02 || ctr[1] < -0.02 || ctr[1] > 1.02) continue;
+   const pp = polyST(pts); x.save(); x.beginPath(); pp.forEach((q, i) => i ? x.lineTo(q[0], q[1]) : x.moveTo(q[0], q[1])); x.closePath(); const sh = hash(row, col, 4); x.fillStyle = `rgba(${10 + sh * 14},${12 + sh * 14},${16 + sh * 18},.55)`; x.fill(); x.restore();
+   glowLine(pp, 0.55 + sh * 0.2, 0.8);
+   // 유리 코팅 반사
+   if (sh > 0.7) { const q = polyST([[ctr[0] - 0.012, ctr[1] + 0.02], [ctr[0] + 0.012, ctr[1] + 0.035]]); glowLine(q, 0.4, 1, [210, 250, 255]); }
+  }
+  frame(0.12);
+ },
+ pica() {
+  surface((s, t) => { const n = fbm(s * 22, t * 22, 5), char = Math.max(0, t - 0.45) * 1.8, ember = Math.pow(fbm(s * 50, t * 50, 8), 3) * char; return [107 - char * 70 + ember * 260, 74 - char * 50 + ember * 110, 46 - char * 35 + ember * 20, 0.95, (n - 0.5) * 0.25]; });
+  sides('rgba(120,80,50,.6)', [[0, 0.25, 'rgba(40,24,16,.85)'], [0.25, 1, 'rgba(150,102,64,.65)']]);
+  holoTint();
+  // 블록 경계와 깎인 홈
+  for (let i = 1; i < 5; i++) glowLine(curveT(i / 5), 0.55, 0.9); for (let j = 1; j < 4; j++) glowLine(curveS(j / 4), 0.55, 0.9);
+  for (let k = 0; k < 6; k++) contour((s, t) => fbm(s * 5, t * 5, 77) + t * 0.8, 0.85 + k * 0.08, 90, 70, 0.4, 0.7, [255, 170, 90]);
+  // 불씨
+  x.save(); x.globalCompositeOperation = 'lighter'; seed = 21; for (let i = 0; i < 160; i++) { const s = rnd(), t = 0.55 + rnd() * 0.45, p = proj(P(s, t)), r = 0.6 + rnd() * 2.2, g = x.createRadialGradient(p[0], p[1], 0, p[0], p[1], r * 3); g.addColorStop(0, `rgba(255,${150 + rnd() * 80 | 0},70,${0.5 + rnd() * 0.4})`); g.addColorStop(1, 'rgba(255,120,40,0)'); x.fillStyle = g; x.beginPath(); x.arc(p[0], p[1], r * 3, 0, Math.PI * 2); x.fill(); } x.restore();
+  frame(0.1);
+ },
+ cork() {
+  surface((s, t) => { const g = vnoise(s * 70, t * 60, 2), n = fbm(s * 9, t * 9, 6); return [176 * (0.75 + g * 0.35) * (0.85 + n * 0.25), 128 * (0.75 + g * 0.35) * (0.85 + n * 0.25), 80 * (0.7 + g * 0.35), 0.95, (g - 0.5) * 0.12]; }, 120, 95);
+  sides('rgba(160,115,70,.65)');
+  holoTint();
+  // 알갱이 테두리
+  contour((s, t) => vnoise(s * 26, t * 22, 2), 0.62, 130, 110, 0.35, 0.6, [255, 215, 160]);
+  x.save(); x.globalCompositeOperation = 'lighter'; seed = 5; for (let i = 0; i < 700; i++) { const s = rnd(), t = rnd(), p = proj(P(s, t)), r = 1 + rnd() * 2.4; x.strokeStyle = `rgba(255,${200 + rnd() * 40 | 0},150,${0.18 + rnd() * 0.3})`; x.lineWidth = 0.7; x.beginPath(); x.ellipse(p[0], p[1], r, r * 0.7, rnd() * 3, 0, Math.PI * 2); x.stroke(); } x.restore();
+  frame(0.15);
+ },
+ blanket() {
+  const q = 9; // 다이아몬드 누빔
+  surface((s, t) => { const u = (s * SW + t * SH) * q / 2.4, v = (s * SW - t * SH) * q / 2.4, fu = u - Math.floor(u), fv = v - Math.floor(v), puff = Math.sin(fu * Math.PI) * Math.sin(fv * Math.PI), n = fbm(s * 40, t * 40, 12); return [212 * (0.7 + puff * 0.35) * (0.9 + n * 0.15), 211 * (0.7 + puff * 0.35) * (0.9 + n * 0.15), 203 * (0.72 + puff * 0.3), 0.92, puff * 0.12 - 0.05]; }, 110, 90);
+  sides('rgba(200,200,192,.6)');
+  holoTint();
+  // 바느질선
+  for (let k = -12; k <= 12; k++) { const pts = []; for (let i = 0; i <= 40; i++) { const s = i / 40, t = (k * 2.4 / q - s * SW) / SH; if (t >= 0 && t <= 1) pts.push([s, t]); } if (pts.length > 1) { const pp = polyST(pts); x.save(); x.setLineDash([3, 3]); glowLine(pp, 0.55, 0.7); x.restore(); }
+   const pts2 = []; for (let i = 0; i <= 40; i++) { const s = i / 40, t = (s * SW - k * 2.4 / q) / SH; if (t >= 0 && t <= 1) pts2.push([s, t]); } if (pts2.length > 1) glowLine(polyST(pts2), 0.55, 0.7); }
+  frame(0.08);
+ },
+ foam() {
+  surface((s, t) => { const n = fbm(s * 7, t * 7, 31), m = fbm(s * 26, t * 26, 33), e = 0.01, gx = fbm((s + e) * 7, t * 7, 31) - n, gy = fbm(s * 7, (t + e) * 7, 31) - n, sh = Math.max(0.7, 1.05 + (-gx * 0.7 + gy * 0.9) * 14); return [255 * Math.min(1.1, (0.8 + n * 0.3) * sh), 150 * (0.78 + n * 0.3) * sh, 70 * (0.7 + m * 0.4) * sh, 0.95, 0.15]; }, 140, 110);
+  sides('rgba(230,130,60,.55)', [[0, 0.8, 'rgba(240,145,70,.6)'], [0.8, 1, 'rgba(180,190,200,.55)']]);
+  holoTint();
+  for (let k = 0; k < 12; k++) contour((s, t) => fbm(s * 7, t * 7, 31), 0.3 + k * 0.03, 130, 100, 0.5, 0.7, [255, 215, 160]);
+  frame(0.12);
+ },
+ mli() {
+  // 금빛 포일 6겹: 오른쪽 위 모서리가 한 장씩 들려 겹이 보임
+  const layers = 6, peel = (s, t, k) => Math.max(0, (s - 0.62) / 0.38) * Math.max(0, (t - 0.55) / 0.45) * (layers - k) * 0.045;
+  for (let k = layers - 1; k >= 0; k--) {
+   const d = k / layers * 0.85, tex = (s, t) => { const cr = Math.sin(fbm(s * 5 + k * 3, t * 4, 40 + k) * 14 + s * 6), sh = 0.6 + 0.4 * Math.abs(cr); return [235 * sh * (1 - k * 0.07), 196 * sh * (1 - k * 0.08), 82 * sh, k ? 0.42 : 0.9, cr * 0.06]; };
+   for (let i = 0; i < 120; i++) for (let j = 0; j < 95; j++) { const s0 = i / 120, s1 = (i + 1) / 120, t0 = j / 95, t1 = (j + 1) / 95, sc = (s0 + s1) / 2, tc = (t0 + t1) / 2, c = tex(sc, tc), n = normal(sc), lit = 0.4 + 0.6 * Math.max(0, n[0] * L[0] + n[1] * L[1] + n[2] * L[2]) + c[4];
+    quad(proj(P(s0, t0, d, peel(s0, t0, k))), proj(P(s1, t0, d, peel(s1, t0, k))), proj(P(s1, t1, d, peel(s1, t1, k))), proj(P(s0, t1, d, peel(s0, t1, k))), `rgba(${Math.min(255, c[0] * lit) | 0},${Math.min(255, c[1] * lit) | 0},${c[2] * lit | 0},${c[3]})`); }
+   const edge = (fn, n) => Array.from({ length: n + 1 }, (_, i) => fn(i / n));
+   glowLine(edge(q => proj(P(1, q, d, peel(1, q, k))), 40), 0.75, 0.9, [255, 225, 130]);
+   glowLine(edge(q => proj(P(q, 1, d, peel(q, 1, k))), 40), 0.75, 0.9, [255, 225, 130]);
+   glowLine(edge(q => proj(P(q, 0, d, 0)), 40), 0.45, 0.7, [255, 225, 130]);
+  }
+  holoTint();
+  for (let k = 0; k < 10; k++) contour((s, t) => Math.sin(fbm(s * 5 + 0, t * 4, 40) * 14 + s * 6), -0.9 + k * 0.2, 120, 95, 0.22, 0.55, [255, 240, 190]);
+  frame(0.07);
+ },
+ rcc() {
+  // 3차원 직조 탄소섬유: 가로·세로 섬유 다발이 번갈아 위아래로
+  const nu = 18, nv = 15;
+  surface((s, t) => { const u = s * nu, v = t * nv, iu = Math.floor(u), iv = Math.floor(v), fu = u - iu, fv = v - iv, horiz = (iu + iv) % 2 === 0, str = horiz ? Math.sin(fv * Math.PI) : Math.sin(fu * Math.PI), lines = horiz ? Math.abs(Math.sin(fv * Math.PI * 6)) : Math.abs(Math.sin(fu * Math.PI * 6)), n = fbm(s * 30, t * 30, 51), g = 0.45 + 0.4 * str + 0.15 * lines; return [58 * g * (0.85 + n * 0.3), 62 * g * (0.85 + n * 0.3), 72 * g * (0.9 + n * 0.25), 0.95, str * 0.1]; }, 140, 110);
+  sides('rgba(70,76,86,.75)', [[0, 0.12, 'rgba(190,210,225,.5)'], [0.12, 1, 'rgba(60,66,76,.8)']]);
+  holoTint();
+  // 섬유 다발 윤곽
+  for (let i = 0; i < nu; i++) for (let j = 0; j < nv; j++) { const s0 = i / nu, s1 = (i + 1) / nu, t0 = j / nv, t1 = (j + 1) / nv, horiz = (i + j) % 2 === 0, m = 0.08;
+   if (horiz) { glowLine(polyST([[s0, t0 + (t1 - t0) * m], [s1, t0 + (t1 - t0) * m]]), 0.42, 0.6); glowLine(polyST([[s0, t1 - (t1 - t0) * m], [s1, t1 - (t1 - t0) * m]]), 0.42, 0.6); }
+   else { glowLine(polyST([[s0 + (s1 - s0) * m, t0], [s0 + (s1 - s0) * m, t1]]), 0.42, 0.6); glowLine(polyST([[s1 - (s1 - s0) * m, t0], [s1 - (s1 - s0) * m, t1]]), 0.42, 0.6); } }
+  x.save(); x.globalCompositeOperation = 'lighter'; seed = 9; for (let i = 0; i < 120; i++) { const p = proj(P(rnd(), rnd())); x.fillStyle = `rgba(200,250,255,${0.25 + rnd() * 0.5})`; x.fillRect(p[0], p[1], 1.4, 1.4); } x.restore();
+  frame(0.06);
+ },
+};
+function render(id) {
+ background();
+ // 안쪽(뒷면) 은은하게
+ x.globalAlpha = 0.5; glowLine(curveS(0, 1), 0.3, 0.8); glowLine(curveS(1, 1), 0.3, 0.8); glowLine(curveT(0, 1), 0.3, 0.8); x.globalAlpha = 1;
+ MATS[id]();
+ scan();
+}
+window.render = render;
+</script></body></html>

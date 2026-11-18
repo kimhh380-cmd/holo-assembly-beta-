@@ -67,7 +67,7 @@ const BUILTIN = [
  { id: 'fins', cat: 'at', name: '안정 핀', desc: '꼬리를 뒤로 유지하는 삼각 날개', kind: 'att' },
 ];
 // assets/cards/에 그림이 있는 카드 id 목록 (그림을 추가하면 여기에도 id를 넣기 — 없는 그림을 불러오는 오류를 막음)
-const CARD_ART = new Set(['raptor', 'raptorvac', 'merlin', 'mvac', 'rs25', 'rl10', 'be4', 'srb']);
+const CARD_ART = new Set(['raptor', 'raptorvac', 'merlin', 'mvac', 'rs25', 'rl10', 'be4', 'srb', 'hex', 'pica', 'cork', 'blanket', 'foam', 'mli', 'rcc']);
 const CATS = [['st', '구조'], ['en', '엔진'], ['tp', '단열재'], ['fu', '연료'], ['at', '부착물']];
 const TESTS = [
  ['press', '압력', '물이나 액체질소를 채우고 압력을 올려 보증 압력(운용의 1.1배)과 요구 파열 압력(1.4배)을 확인해요.'],
