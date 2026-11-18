@@ -23,14 +23,41 @@ CARDS_EL.addEventListener('click', e => {
  const b = e.target.closest('[data-delcard]'); if (!b) return; e.stopPropagation(); if (!b.classList.contains('arm')) { b.classList.add('arm'); b.textContent = '정말 지울까요?'; setTimeout(() => { if (b.isConnected) { b.classList.remove('arm'); b.textContent = '지우기'; } }, 2500); return; }
  const id = b.dataset.delcard; S.custom = S.custom.filter(c => c.id !== id); S.parts.forEach(p => { if (p.from === id) p.from = null; }); if (S.bench && S.bench.from === id) S.bench.from = null; rebuildCards(); save(); renderDeck(); toast('카드를 지웠어요 · 이미 끼운 부품은 그대로예요'); });
 CARDS_EL.addEventListener('keydown', e => { if (e.key !== 'Enter' && e.key !== ' ') return; if (e.target.closest('.cbtn')) return; if (e.target.closest('[data-new]')) { e.preventDefault(); return newPart(); } const el = e.target.closest('[data-card]'); if (el) { e.preventDefault(); apply(el.dataset.card, null, null); } });
-let lastTap = { t: 0, uid: null };
-cv.addEventListener('pointerdown', e => { const sx = e.clientX, r0 = S.rot; let moved = false; cv.setPointerCapture(e.pointerId);
- const mv = ev => { const dx = ev.clientX - sx; if (Math.abs(dx) > 4) { moved = true; S.dragRot = true; S.rot = r0 + dx * 0.01; } };
- const up = ev => { cv.removeEventListener('pointermove', mv); cv.removeEventListener('pointerup', up); S.dragRot = false; if (moved || isSolo()) return; const p = hitPart(ev.clientX, ev.clientY), now = performance.now();
-  if (p && lastTap.uid === p.uid && now - lastTap.t < 380) { lastTap = { t: 0, uid: null }; return openEditor(p.uid); } lastTap = { t: now, uid: p ? p.uid : null };
-  if (ep() && p) return openEditor(p.uid); S.sel = p ? p.uid : null; renderSel(); };
- cv.addEventListener('pointermove', mv); cv.addEventListener('pointerup', up); });
-cv.addEventListener('pointermove', e => { if (!S.drag) S.hover = isSolo() ? null : hitPart(e.clientX, e.clientY); cv.style.cursor = S.hover ? 'pointer' : 'grab'; });
+let lastTap = { t: 0, uid: null, at: 0 };
+// 3D 조작: 한 손가락/왼쪽 끌기 = 회전(좌우·위아래), 휠·두 손가락 = 확대·축소, 오른쪽·가운데 버튼·Shift+끌기·두 손가락 = 이동
+const PTR = new Map(); let G = null;
+const pdist = () => { const [a, b] = [...PTR.values()]; return Math.hypot(a.x - b.x, a.y - b.y) || 1; };
+const pmid = () => { const [a, b] = [...PTR.values()]; return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }; };
+cv.addEventListener('contextmenu', e => e.preventDefault());
+cv.addEventListener('pointerdown', e => {
+ cv.setPointerCapture(e.pointerId); PTR.set(e.pointerId, { x: e.clientX, y: e.clientY }); VIEW.to = null;
+ if (PTR.size === 1) G = { mode: e.button === 1 || e.button === 2 || e.shiftKey ? 'pan' : 'orbit', sx: e.clientX, sy: e.clientY, rot: S.rot, pitch: VIEW.pitch, px: VIEW.px, py: VIEW.py, moved: false };
+ else if (PTR.size === 2) { const m = pmid(); G = { mode: 'pinch', d: pdist(), mx: m.x, my: m.y, moved: true }; }
+});
+cv.addEventListener('pointermove', e => {
+ if (!PTR.has(e.pointerId) || !G) return; PTR.set(e.pointerId, { x: e.clientX, y: e.clientY });
+ if (G.mode === 'pinch' && PTR.size >= 2) { const d = pdist(), m = pmid(), r = cv.getBoundingClientRect(); zoomAt(m.x - r.left, m.y - r.top, d / G.d); VIEW.px += m.x - G.mx; VIEW.py += m.y - G.my; G.d = d; G.mx = m.x; G.my = m.y; return; }
+ const dx = e.clientX - G.sx, dy = e.clientY - G.sy; if (!G.moved && Math.hypot(dx, dy) < 5) return; G.moved = true;
+ if (G.mode === 'pan') { VIEW.px = G.px + dx; VIEW.py = G.py + dy; }
+ else { S.dragRot = true; S.rot = G.rot + dx * 0.01; VIEW.pitch = Math.min(Math.PI / 2, Math.max(0.03, G.pitch + dy * 0.006)); }
+});
+function ptrEnd(e) {
+ if (!PTR.has(e.pointerId)) return; PTR.delete(e.pointerId); S.dragRot = false;
+ if (PTR.size === 1 && G && G.mode === 'pinch') { const [q] = [...PTR.values()]; G = { mode: 'pan', sx: q.x, sy: q.y, px: VIEW.px, py: VIEW.py, moved: true }; return; }
+ if (PTR.size) return; const g = G; G = null; if (!g || g.moved || e.type === 'pointercancel') return;
+ const p = hitPart(e.clientX, e.clientY), now = performance.now();
+ if (!p) { if (now - lastTap.at < 380) { lastTap.at = 0; return resetView(); } lastTap.at = now; }
+ if (isSolo()) return;
+ if (p && lastTap.uid === p.uid && now - lastTap.t < 380) { lastTap = { t: 0, uid: null, at: 0 }; return openEditor(p.uid); } lastTap.t = now; lastTap.uid = p ? p.uid : null;
+ if (ep() && p) return openEditor(p.uid); S.sel = p ? p.uid : null; renderSel();
+}
+cv.addEventListener('pointerup', ptrEnd); cv.addEventListener('pointercancel', ptrEnd);
+cv.addEventListener('wheel', e => { e.preventDefault(); const r = cv.getBoundingClientRect(); zoomAt(e.clientX - r.left, e.clientY - r.top, Math.exp(-Math.max(-300, Math.min(300, e.deltaY)) * (e.ctrlKey ? 0.01 : 0.0015))); }, { passive: false });
+function resetView() { setView(VIEW0); }
+$('#viewctl').addEventListener('click', e => { const b = e.target.closest('[data-v]'); if (!b) return; const v = b.dataset.v, r = cv.getBoundingClientRect();
+ if (v === 'in') zoomAt(r.width / 2, r.height / 2, 1.3); else if (v === 'out') zoomAt(r.width / 2, r.height / 2, 1 / 1.3);
+ else if (v === 'reset') resetView(); else if (v === 'top') { const R0 = (geo ? geo.mr : 60) / VIEW.zoom, z = Math.min(12, Math.max(1, Math.min(r.width, r.height) * 0.42 / (2 * R0))); setView({ pitch: Math.PI / 2, zoom: z, px: 0, py: r.height * 0.5 - (geo ? geo.base - VIEW.py : r.height * 0.86) }); } else if (v === 'side') setView({ pitch: 0.03 }); else if (v === 'iso') setView({ pitch: 0.6 }); });
+cv.addEventListener('pointermove', e => { if (!S.drag) S.hover = isSolo() || G ? null : hitPart(e.clientX, e.clientY); cv.style.cursor = G ? (G.mode === 'orbit' ? 'grabbing' : 'move') : S.hover ? 'pointer' : 'grab'; });
 cv.addEventListener('pointerleave', () => { S.hover = null; });
 // 내 카드에 그림 넣기: 고른 이미지를 256px 정사각형으로 줄여 카드에 저장 (Grok 등으로 만든 그림)
 function pickCardImage(id) {

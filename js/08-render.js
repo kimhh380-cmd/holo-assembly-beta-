@@ -2,7 +2,17 @@
    모든 js 파일은 같은 전역 공간을 공유하는 일반 <script>입니다. 순서대로 로드되고, 마지막 99-boot.js가 앱을 시작합니다. */
 /* ---------- 홀로그램 ---------- */
 const cv = $('#cv'), x = cv.getContext('2d'); let W = 0, H = 0, layout = [], geo = null;
-const TILT = 0.26, HC = '63,240,255';
+let TILT = 0.26, VCOS = 0.966; const HC = '63,240,255';
+// 3D 카메라: pitch(내려다보는 각도, rad), zoom(배율), px·py(화면 이동 px). S.rot이 좌우 회전(yaw)
+const VIEW = { pitch: 0.263, zoom: 1, px: 0, py: 0, to: null };
+const VIEW0 = { pitch: 0.263, zoom: 1, px: 0, py: 0 };
+function applyView() {
+ if (VIEW.to) { let done = true; for (const k of ['pitch', 'zoom', 'px', 'py']) { const d = VIEW.to[k] - VIEW[k]; if (Math.abs(d) > (k === 'zoom' || k === 'pitch' ? 1e-3 : 0.3)) { VIEW[k] += d * (RM ? 1 : 0.2); done = false; } else VIEW[k] = VIEW.to[k]; } if (done) VIEW.to = null; }
+ TILT = Math.sin(VIEW.pitch); VCOS = Math.cos(VIEW.pitch);
+}
+function setView(v) { VIEW.to = Object.assign({ pitch: VIEW.pitch, zoom: VIEW.zoom, px: VIEW.px, py: VIEW.py }, v); }
+// 화면의 한 점(sx, sy)을 고정한 채로 확대·축소
+function zoomAt(sx, sy, f) { const z = Math.min(12, Math.max(0.25, VIEW.zoom * f)), k = z / VIEW.zoom; if (!geo) { VIEW.zoom = z; return; } VIEW.to = null; VIEW.px += (sx - geo.cx) * (1 - k); VIEW.py += (sy - geo.base) * (1 - k); VIEW.zoom = z; }
 function size() { const r = cv.getBoundingClientRect(), d = Math.min(2, devicePixelRatio || 1); W = r.width; H = r.height; cv.width = Math.round(W * d); cv.height = Math.round(H * d); x.setTransform(d, 0, 0, d, 0, 0); }
 new ResizeObserver(size).observe(cv); size();
 const nozM = p => p.engines.reduce((m, e) => Math.max(m, CARD[e].noz * 1.9), 0);
@@ -14,9 +24,9 @@ function computeLayout(list, solo) {
  const nh = solo ? (list[0] && list[0].role === 'engbay' ? nozM(list[0]) : 0) : nozzleM(), total = list.reduce((a, p) => a + p.v.h, 0) + nh, mD = list.reduce((a, p) => Math.max(a, maxR(p.v) * 2), 0.5);
  const hb = W <= 760 && S.test ? $('#hud').offsetHeight + 24 : 0, base = solo ? Math.min(H * 0.78, H - hb - 12) : H * 0.86, avail = solo ? Math.min(H * 0.56, base - 40) : base - 50, target = Math.min(avail / Math.max(total, solo ? 0.5 : 4), W * (solo ? 0.26 : 0.3) / mD, solo ? 400 : 70);
  S.scv = S.scv && !RM ? S.scv + (target - S.scv) * 0.12 : target;
- const sc = S.scv, cx = centerX(); let y = base - nh * sc; layout = [];
- list.forEach(p => { const h = p.v.h * sc; layout.push({ p, y0: y, y1: y - h, rf: rfOf(p.v, sc), mr: maxR(p.v) * sc, ex: p.role === 'engbay' ? nozM(p) * sc : 0 }); y -= h; });
- geo = { sc, cx, base, top: y, mr: layout.reduce((a, L) => Math.max(a, L.mr), 10) };
+ const sc = S.scv * VIEW.zoom, cx = centerX() + VIEW.px, b0 = base + VIEW.py; let y = b0 - nh * sc * VCOS; layout = [];
+ list.forEach(p => { const h = p.v.h * sc * VCOS; layout.push({ p, y0: y, y1: y - h, hraw: p.v.h * sc, rf: rfOf(p.v, sc), mr: maxR(p.v) * sc, ex: p.role === 'engbay' ? nozM(p) * sc * VCOS : 0 }); y -= h; });
+ geo = { sc, vc: VCOS, tilt: TILT, cx, base: b0, top: y, solo, mr: layout.reduce((a, L) => Math.max(a, L.mr), 10) };
 }
 const lineA = a => `rgba(${HC},${a})`;
 let tintCol = null;
@@ -35,7 +45,7 @@ function ringsFor(p) { const s = p.v; if (s.prof === 'ogive') return [0, 0.35, 0
 const NOD = { dx: () => 0, rm: () => 1, hm: 1 };
 function drawPart(L, sel, hov, D) {
  D = D || NOD; const p = L.p, h = (L.y0 - L.y1) * D.hm, y0 = L.y0, a = sel ? 1 : hov ? 0.95 : 0.8, cxu = u => geo.cx + D.dx(u), rf = u => L.rf(u) * D.rm(u), R0 = Math.max(rf(0), 2), R = Math.max(L.mr, 2);
- if (h < 0.5) return; x.save();
+ if ((L.hraw ?? h) < 0.5) return; x.save();
  if (p.fuel && p.role === 'tank') fillBody(cxu, y0, h, u => rf(u) * 0.93, FUEL_OF(p.fuel), 0.35 + 0.08 * Math.sin(performance.now() / 600)); else fillBody(cxu, y0, h, rf, '#3ff0ff', 0.06);
  if (p.tps) tpsOverlay(cxu, y0, h, rf, p.tps, R);
  if (D.fill) { x.save(); bodyPath(cxu, y0, h, rf); x.fillStyle = D.fill; x.fill(); x.restore(); }
@@ -57,7 +67,7 @@ function engLayout(n) { const P = [], rg = (m, r, o) => { for (let q = 0; q < m;
 function drawEngines(p, cx, y0, R, a) {
  const n = p.engines.length, lay = engLayout(n), sp = n <= 1 ? 1 : n <= 4 ? 0.6 : n <= 9 ? 0.42 : n <= 20 ? 0.3 : 0.17;
  const items = lay.map((q, i) => { const ph = S.rot, px = q[0] * Math.cos(ph) - q[1] * Math.sin(ph), pz = q[0] * Math.sin(ph) + q[1] * Math.cos(ph); return { id: p.engines[i], X: cx + px * R * 0.92, Y: y0 + pz * R * TILT * 0.92, d: pz }; }).sort((u, v) => u.d - v.d);
- items.forEach(it => { const E = CARD[it.id], w = Math.min(E.noz, E.vac ? 1.8 : 1) * R * sp * (E.vac ? 1.25 : 1), hh = E.noz * 1.9 * geo.sc * (n > 9 ? 0.75 : 1), al = a * (0.45 + 0.55 * (it.d + 1) / 2), t0 = w * 0.32;
+ items.forEach(it => { const E = CARD[it.id], w = Math.min(E.noz, E.vac ? 1.8 : 1) * R * sp * (E.vac ? 1.25 : 1), hh = E.noz * 1.9 * geo.sc * VCOS * (n > 9 ? 0.75 : 1), al = a * (0.45 + 0.55 * (it.d + 1) / 2), t0 = w * 0.32;
   glowLine([[it.X - t0, it.Y], [it.X - w * 0.5, it.Y + hh * 0.45], [it.X - w, it.Y + hh], [it.X + w, it.Y + hh], [it.X + w * 0.5, it.Y + hh * 0.45], [it.X + t0, it.Y]], al, 1);
   x.beginPath(); x.ellipse(it.X, it.Y + hh, Math.max(w, 0.5), Math.max(w * TILT, 0.3), 0, 0, Math.PI * 2); x.fillStyle = FUEL_OF(E.fuel) + '55'; x.fill(); x.strokeStyle = lineA(al * 0.8); x.stroke(); });
 }
@@ -83,9 +93,9 @@ function drawDims(L) {
  x.restore();
 }
 function drawProjector(tm) {
- const cx = centerX(), by = isSolo() ? H * 0.84 : H * 0.88, r = Math.min(W * 0.32, 230);
+ const z = VIEW.zoom, cx = geo.cx, by = geo.base + (geo.solo ? 0.06 : 0.02) * H * z * VCOS, r = Math.min(W * 0.32, 230) * Math.min(z, 3), ch = H * 0.8 * z * VCOS;
  const g = x.createRadialGradient(cx, by, 4, cx, by, r * 1.4); g.addColorStop(0, 'rgba(63,240,255,.35)'); g.addColorStop(1, 'rgba(63,240,255,0)'); x.fillStyle = g; x.beginPath(); x.ellipse(cx, by, r * 1.4, r * 0.42, 0, 0, Math.PI * 2); x.fill();
  for (let i = 0; i < 4; i++) { const rr = r * (0.35 + i * 0.22); x.strokeStyle = lineA(0.45 - i * 0.08); x.lineWidth = 1.2; x.setLineDash([12 + i * 6, 8]); x.lineDashOffset = (RM ? 0 : tm / 3000 * (i % 2 ? -1 : 1)) * 60; x.beginPath(); x.ellipse(cx, by, rr, rr * TILT, 0, 0, Math.PI * 2); x.stroke(); } x.setLineDash([]);
- const cg = x.createLinearGradient(0, by, 0, by - H * 0.8); cg.addColorStop(0, 'rgba(63,240,255,.10)'); cg.addColorStop(1, 'rgba(63,240,255,0)'); x.fillStyle = cg; x.beginPath(); x.moveTo(cx - r * 0.6, by); x.lineTo(cx - r * 0.95, by - H * 0.8); x.lineTo(cx + r * 0.95, by - H * 0.8); x.lineTo(cx + r * 0.6, by); x.fill();
- if (!RM) for (let i = 0; i < 26; i++) { const ph = (tm / 4000 + i * 0.137) % 1, xx = cx + Math.sin(i * 12.9898) * r * 0.8, yy = by - ph * H * 0.75; x.fillStyle = lineA(0.5 * (1 - ph)); x.fillRect(xx, yy, 1.6, 1.6); }
+ const cg = x.createLinearGradient(0, by, 0, by - ch); cg.addColorStop(0, 'rgba(63,240,255,.10)'); cg.addColorStop(1, 'rgba(63,240,255,0)'); x.fillStyle = cg; x.beginPath(); x.moveTo(cx - r * 0.6, by); x.lineTo(cx - r * 0.95, by - ch); x.lineTo(cx + r * 0.95, by - ch); x.lineTo(cx + r * 0.6, by); x.fill();
+ if (!RM) for (let i = 0; i < 26; i++) { const ph = (tm / 4000 + i * 0.137) % 1, xx = cx + Math.sin(i * 12.9898) * r * 0.8, yy = by - ph * ch * 0.94; x.fillStyle = lineA(0.5 * (1 - ph)); x.fillRect(xx, yy, 1.6, 1.6); }
 }

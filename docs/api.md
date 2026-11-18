@@ -68,7 +68,8 @@
 
 **그리기에 쓰는 값**
 - `L`(부품 배치): `L.y0`는 바닥 y, `L.y1`은 위 y, `L.rf(u)`는 반지름 px, `L.mr`은 최대 반지름 px, `L.p`는 부품입니다.
-- `HOLO.geo`: `geo.cx`는 중심 x, `geo.sc`는 1 m당 px입니다.
+- `HOLO.geo`: `geo.cx`는 중심 x, `geo.base`는 바닥 y, `geo.sc`는 1 m당 px(확대 배율 포함)입니다.
+- **3D 시점:** 홀로그램은 내려다보는 각도(pitch)를 바꿀 수 있어요. 높이 방향 길이(m)를 그릴 때는 `geo.vc`(= cos pitch)를 곱하고, 둥근 고리의 세로 납작함은 `geo.tilt`(= sin pitch)를 쓰세요. 예: 높이 2 m는 `2 * geo.sc * geo.vc` px, 반지름 r px 고리는 가로 r, 세로 `r * geo.tilt`. 좌우 회전 각도는 `HOLO.state.rot`입니다.
 - `T`(실행 중인 시험): `T.R`, `T.p`, `T.done`이 있습니다. 화면을 흔들려면 `T.shake = 6`을 넣습니다.
 - 파티클은 `T.parts.push({x,y,vx,vy,r,life:1,spark:true})`로 넣으면 앱이 대신 그려 줍니다.
 

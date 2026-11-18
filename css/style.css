@@ -121,6 +121,9 @@ body.editing .selbox{display:none}
 .meter .mk span{position:absolute;top:18px;transform:translateX(-50%);font-size:11.5px;white-space:nowrap}
 .hud .verdict{margin-top:4px;font-weight:600}
 .hud .verdict.ok{color:var(--ok)}.hud .verdict.no{color:var(--warn)}
+.viewctl{position:absolute;left:14px;bottom:12px;z-index:2;display:flex;gap:4px;flex-wrap:wrap;max-width:calc(100% - 28px)}
+.viewctl button{min-width:36px;height:36px;padding:0 9px;border:1px solid #1d4664;background:rgba(6,17,31,.85);border-radius:8px;font:600 14px "IBM Plex Sans KR",sans-serif;cursor:pointer;color:var(--ink)}
+.viewctl button:hover{border-color:var(--holo)}
 .info{position:absolute;right:14px;bottom:12px;z-index:2;font:500 13px/1.3 "Space Grotesk","IBM Plex Sans KR",sans-serif;color:var(--mut);text-align:right;pointer-events:none}
 .info b{color:var(--ink);font-weight:500}
 .toast{position:absolute;left:50%;bottom:48px;transform:translateX(-50%);z-index:4;background:rgba(10,22,38,.95);border:1px solid var(--holo);border-radius:10px;padding:8px 14px;font-size:13.5px;opacity:0;transition:opacity .25s;pointer-events:none;max-width:calc(100% - 32px)}
@@ -140,6 +143,8 @@ body.editing .selbox{display:none}
 .app{grid-template-columns:minmax(0,1fr);grid-template-rows:auto minmax(0,1fr) auto}
 .deck{grid-row:3;border-right:0;border-top:1px solid var(--line);height:216px}
 body.edpanel .deck{height:min(54svh,440px)}
+body.testing .viewctl{display:none}
+.viewctl button{height:32px;min-width:32px}
 body.testing .deck{height:min(36svh,300px)}
 .cards{flex:0 0 auto;height:166px;grid-template-columns:none;grid-auto-flow:column;grid-auto-columns:136px;overflow-x:auto;overflow-y:hidden}
 .sec{display:none}

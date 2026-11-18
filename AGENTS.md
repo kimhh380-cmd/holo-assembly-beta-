@@ -161,6 +161,7 @@ prompts/                      GPT·Gemini·Grok에게 줄 작업 지시서
 
 ## CHANGELOG
 
+- 2026-11-18 · Claude · 3D 홀로그램 시점: 끌어서 좌우·위아래 회전, 휠·두 손가락 확대·축소(커서 위치 기준), 오른쪽 버튼·Shift·두 손가락 이동, 시점 버튼(확대·축소·옆·사선·위·처음), 빈 곳 두 번 눌러 초기화. VIEW/applyView/zoomAt (08-render.js), geo.vc·geo.tilt 추가
 - 2026-11-18 · Claude · 모든 카드에 그림 지원 (기본 카드 assets/cards/<id>.png 자동 표시, 내 카드 “그림 넣기”, 편집 패널 머리에 썸네일), 엔진 그림을 assets/cards로 이동, Grok 카드 그림 지시서 추가
 - 2026-11-18 · Gemini + Claude · 단열재 실험 모듈 추가 (Gemini의 다층 열물리 엔진 holo_tps.js를 Claude가 HOLO API에 연결: 다층 단열재 설계 패널, 다층 아크젯·극저온·열진공 시험, 단열재 카드 저장). docs/ext-insulation.md
 - 2026-11-18 · Grok + Claude · 엔진 카드 이미지 8장 추가 (assets/cards, 256px로 축소), 이미지가 있으면 카드에 표시

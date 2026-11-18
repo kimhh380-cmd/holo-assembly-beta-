@@ -28,7 +28,7 @@
   <div class="cats" id="cats" role="tablist"></div>
   <div class="cards" id="cards"></div>
   <div class="editor" id="editor" hidden></div>
-  <p class="hint" id="hint">카드를 눌러도 됩니다: 구조는 맨 위에, 나머지는 선택한 부품에 붙어요. 기체를 끌면 돌아가고, 부품을 두 번 누르면 작업대로 띄워요.</p>
+  <p class="hint" id="hint">카드를 눌러도 됩니다: 구조는 맨 위에, 나머지는 선택한 부품에 붙어요. 기체를 끌면 3D로 돌아가요. 휠이나 두 손가락으로 확대·축소, 오른쪽 버튼(또는 Shift)으로 끌면 이동, 빈 곳을 두 번 누르면 시점이 처음으로 돌아가요. 부품을 두 번 누르면 작업대로 띄워요.</p>
  </aside>
  <main class="stage" id="stage">
   <canvas id="cv"></canvas>
@@ -36,6 +36,11 @@
   <div class="selbox" id="selbox" hidden></div>
   <div class="hud" id="hud" hidden></div>
   <div class="empty" id="empty" hidden>투사대가 비어 있어요. 구조 카드나 “새 부품 설계”부터 시작해 보세요</div>
+  <div class="viewctl" id="viewctl" role="toolbar" aria-label="홀로그램 시점">
+   <button data-v="in" aria-label="확대" title="확대 (휠 위로)">+</button><button data-v="out" aria-label="축소" title="축소 (휠 아래로)">−</button>
+   <button data-v="side" title="옆에서 보기">옆</button><button data-v="iso" title="비스듬히 보기">사선</button><button data-v="top" title="위에서 보기">위</button>
+   <button data-v="reset" title="시점 처음으로 (빈 곳 두 번 클릭)">처음</button>
+  </div>
   <div class="info" id="info"></div>
   <div class="toast" id="toast"></div>
  </main>

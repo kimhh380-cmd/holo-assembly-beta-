@@ -59,7 +59,7 @@ function frame(tm) {
  if (T) { const el = tm - T.t0; tau = el / T.dur; T.vph = (T.vph || 0) + (T.kind === 'vib' && !TEST_EXT.vib ? 2 * Math.PI * Math.min(T.R.aux.fr(Math.min(tau, 1)), 14) / 60 * dt * 0.5 : 0);
   if (!T.done && el > T.dur + T.post) finishTest(); if (T.R.failAt != null && tau >= T.R.failAt && tau < T.R.failAt + 0.06 && !TEST_EXT[T.kind] && (T.kind === 'press' || T.kind === 'comp')) shake = 6; if (T.shake) { shake = T.shake; T.shake = 0; } updHud(Math.min(tau, 1)); }
  x.clearRect(0, 0, W, H); x.save(); if (shake && !RM) x.translate((Math.random() - 0.5) * shake, (Math.random() - 0.5) * shake);
- drawProjector(tm); computeLayout(solo && E ? [E] : S.parts, solo);
+ applyView(); computeLayout(solo && E ? [E] : S.parts, solo); drawProjector(tm);
  x.save(); if (!RM) x.globalAlpha = 0.92 + 0.08 * Math.sin(tm / 90) * Math.sin(tm / 37);
  layout.forEach(L => { const D = T && solo && L.p === T.p ? testDeform(L, Math.min(tau, 1), tm) : null; if (T && solo && L.p === T.p && (T.kind === 'press' && !TEST_EXT.press || T.R.hidePart) && T.R.failAt != null && tau >= T.R.failAt) return; drawPart(L, !solo && (L.p.uid === S.sel || (E && L.p === E)), S.hover && S.hover.uid === L.p.uid, D); });
  x.restore();
