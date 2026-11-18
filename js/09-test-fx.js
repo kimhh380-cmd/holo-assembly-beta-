@@ -51,6 +51,10 @@ function drawRig(L, tau, now, dt) {
 }
 let lastT = 0;
 function frame(tm) {
+ try { frameBody(tm); } catch (e) { console.error('[그리기 오류]', e); try { x.setTransform(Math.min(2, devicePixelRatio || 1), 0, 0, Math.min(2, devicePixelRatio || 1), 0, 0); } catch (e2) { /* 무시 */ } }
+ requestAnimationFrame(frame);
+}
+function frameBody(tm) {
  const dt = Math.min(3, lastT ? (tm - lastT) / 16.67 : 1); lastT = tm;
  if (S.auto && !S.dragRot && !RM && !(S.test && !S.test.done)) S.rot += 0.004 * dt;
  const solo = isSolo(), E = ep();
@@ -60,6 +64,7 @@ function frame(tm) {
   if (!T.done && el > T.dur + T.post) finishTest(); if (T.R.failAt != null && tau >= T.R.failAt && tau < T.R.failAt + 0.06 && !TEST_EXT[T.kind] && (T.kind === 'press' || T.kind === 'comp')) shake = 6; if (T.shake) { shake = T.shake; T.shake = 0; } updHud(Math.min(tau, 1)); }
  x.clearRect(0, 0, W, H); x.save(); if (shake && !RM) x.translate((Math.random() - 0.5) * shake, (Math.random() - 0.5) * shake);
  applyView(); computeLayout(solo && E ? [E] : S.parts, solo); drawProjector(tm);
+ x.save(); rollIn();
  x.save(); if (!RM) x.globalAlpha = 0.92 + 0.08 * Math.sin(tm / 90) * Math.sin(tm / 37);
  layout.forEach(L => { const D = T && solo && L.p === T.p ? testDeform(L, Math.min(tau, 1), tm) : null; if (T && solo && L.p === T.p && (T.kind === 'press' && !TEST_EXT.press || T.R.hidePart) && T.R.failAt != null && tau >= T.R.failAt) return; drawPart(L, !solo && (L.p.uid === S.sel || (E && L.p === E)), S.hover && S.hover.uid === L.p.uid, D); });
  x.restore();
@@ -70,6 +75,5 @@ function frame(tm) {
   else if (D.tgt) { const L = layout.find(q => q.p === D.tgt); if (L) { const w = Math.max(L.mr, 10) * 1.5; x.strokeStyle = '#ffc24a'; x.lineWidth = 2; x.strokeRect(geo.cx - w, L.y1 - 6, w * 2, L.y0 - L.y1 + 12 + L.ex); } }
   x.restore(); }
  for (const f of DRAW_HOOKS) { if (f.dead) continue; x.save(); try { f({ ctx: x, W, H, geo, layout, solo, part: E, test: T, tau: Math.min(tau, 1), now: tm, dt }); } catch (e) { f.dead = true; console.error('[확장 그리기 오류 — 이 훅은 꺼짐]', e); } x.restore(); }
- x.restore();
- requestAnimationFrame(frame);
+ x.restore(); x.restore();
 }

@@ -3,16 +3,19 @@
 /* ---------- 홀로그램 ---------- */
 const cv = $('#cv'), x = cv.getContext('2d'); let W = 0, H = 0, layout = [], geo = null;
 let TILT = 0.26, VCOS = 0.966; const HC = '63,240,255';
-// 3D 카메라: pitch(내려다보는 각도, rad), zoom(배율), px·py(화면 이동 px). S.rot이 좌우 회전(yaw)
-const VIEW = { pitch: 0.263, zoom: 1, px: 0, py: 0, to: null };
-const VIEW0 = { pitch: 0.263, zoom: 1, px: 0, py: 0 };
+// 3D 카메라: pitch(위아래 각도, rad: +는 위에서, −는 아래에서), roll(화면 안에서 기울기, rad), zoom(배율), px·py(화면 이동 px). S.rot이 좌우 회전(yaw)
+const VIEW = { pitch: 0.263, roll: 0, zoom: 1, px: 0, py: 0, to: null };
+const VIEW0 = { pitch: 0.263, roll: 0, zoom: 1, px: 0, py: 0 };
 function applyView() {
- if (VIEW.to) { let done = true; for (const k of ['pitch', 'zoom', 'px', 'py']) { const d = VIEW.to[k] - VIEW[k]; if (Math.abs(d) > (k === 'zoom' || k === 'pitch' ? 1e-3 : 0.3)) { VIEW[k] += d * (RM ? 1 : 0.2); done = false; } else VIEW[k] = VIEW.to[k]; } if (done) VIEW.to = null; }
+ if (VIEW.to) { let done = true; for (const k of ['pitch', 'roll', 'zoom', 'px', 'py']) { const d = VIEW.to[k] - VIEW[k]; if (Math.abs(d) > (k === 'px' || k === 'py' ? 0.3 : 1e-3)) { VIEW[k] += d * (RM ? 1 : 0.2); done = false; } else VIEW[k] = VIEW.to[k]; } if (done) VIEW.to = null; }
  TILT = Math.sin(VIEW.pitch); VCOS = Math.cos(VIEW.pitch);
 }
-function setView(v) { VIEW.to = Object.assign({ pitch: VIEW.pitch, zoom: VIEW.zoom, px: VIEW.px, py: VIEW.py }, v); }
+function setView(v) { VIEW.to = Object.assign({ pitch: VIEW.pitch, roll: VIEW.roll, zoom: VIEW.zoom, px: VIEW.px, py: VIEW.py }, v); }
+// 기울기(roll)는 기체 가운데를 중심으로 캔버스를 돌려서 그림. 화면 좌표 ↔ 기체 좌표 변환
+function rollIn() { if (!geo || !VIEW.roll) return; const p = geo.pv; x.translate(p.x, p.y); x.rotate(VIEW.roll); x.translate(-p.x, -p.y); }
+function toLocal(sx, sy) { if (!geo || !VIEW.roll) return { x: sx, y: sy }; const p = geo.pv, c = Math.cos(-VIEW.roll), s = Math.sin(-VIEW.roll), dx = sx - p.x, dy = sy - p.y; return { x: p.x + dx * c - dy * s, y: p.y + dx * s + dy * c }; }
 // 화면의 한 점(sx, sy)을 고정한 채로 확대·축소
-function zoomAt(sx, sy, f) { const z = Math.min(12, Math.max(0.25, VIEW.zoom * f)), k = z / VIEW.zoom; if (!geo) { VIEW.zoom = z; return; } VIEW.to = null; VIEW.px += (sx - geo.cx) * (1 - k); VIEW.py += (sy - geo.base) * (1 - k); VIEW.zoom = z; }
+function zoomAt(sx, sy, f) { const z = Math.min(12, Math.max(0.25, VIEW.zoom * f)), k = z / VIEW.zoom; if (!geo) { VIEW.zoom = z; return; } VIEW.to = null; ({ x: sx, y: sy } = toLocal(sx, sy)); VIEW.px += (sx - geo.cx) * (1 - k); VIEW.py += (sy - geo.base) * (1 - k); VIEW.zoom = z; }
 function size() { const r = cv.getBoundingClientRect(), d = Math.min(2, devicePixelRatio || 1); W = r.width; H = r.height; cv.width = Math.round(W * d); cv.height = Math.round(H * d); x.setTransform(d, 0, 0, d, 0, 0); }
 new ResizeObserver(size).observe(cv); size();
 const nozM = p => p.engines.reduce((m, e) => Math.max(m, CARD[e].noz * 1.9), 0);
@@ -26,12 +29,14 @@ function computeLayout(list, solo) {
  S.scv = S.scv && !RM ? S.scv + (target - S.scv) * 0.12 : target;
  const sc = S.scv * VIEW.zoom, cx = centerX() + VIEW.px, b0 = base + VIEW.py; let y = b0 - nh * sc * VCOS; layout = [];
  list.forEach(p => { const h = p.v.h * sc * VCOS; layout.push({ p, y0: y, y1: y - h, hraw: p.v.h * sc, rf: rfOf(p.v, sc), mr: maxR(p.v) * sc, ex: p.role === 'engbay' ? nozM(p) * sc * VCOS : 0 }); y -= h; });
- geo = { sc, vc: VCOS, tilt: TILT, cx, base: b0, top: y, solo, mr: layout.reduce((a, L) => Math.max(a, L.mr), 10) };
+ // 원근 느낌: 카메라에 가까운 쪽(위에서 보면 윗부분, 아래에서 보면 아랫부분)을 조금 더 굵게
+ const pvy = (b0 + y) / 2, PK = 0.7 * TILT / Math.max(H, 1); if (Math.abs(PK) > 1e-6) layout.forEach(L => { const f0 = L.rf, hh = L.y0 - L.y1, y0 = L.y0; L.rf = u => f0(u) * Math.max(0.4, 1 + PK * (pvy - (y0 - u * hh))); });
+ geo = { sc, vc: VCOS, tilt: TILT, cx, base: b0, top: y, solo, pv: { x: cx, y: pvy }, roll: VIEW.roll, mr: layout.reduce((a, L) => Math.max(a, L.mr), 10) };
 }
 const lineA = a => `rgba(${HC},${a})`;
 let tintCol = null;
 function glowLine(pts, a, w) { const c = tintCol || HC; x.lineWidth = (w || 1.2) * 3.2; x.strokeStyle = `rgba(${c},${a * 0.18})`; x.beginPath(); pts.forEach((q, i) => i ? x.lineTo(q[0], q[1]) : x.moveTo(q[0], q[1])); x.stroke(); x.lineWidth = w || 1.2; x.strokeStyle = `rgba(${c},${a})`; x.stroke(); }
-function ring(cxv, y, r, a) { const pts = []; for (let i = 0; i <= 40; i++) { const t = i / 40 * Math.PI * 2; pts.push([cxv + Math.sin(t) * r, y + Math.cos(t) * r * TILT]); } glowLine(pts.slice(0, 21), a); glowLine(pts.slice(20), a * 0.35); }
+function ring(cxv, y, r, a) { const pts = []; for (let i = 0; i <= 40; i++) { const t = -Math.PI / 2 + i / 40 * Math.PI * 2; pts.push([cxv + Math.sin(t) * r, y + Math.cos(t) * r * TILT]); } glowLine(pts.slice(0, 21), a); glowLine(pts.slice(20), a * 0.35); }
 function profile(cxu, y0, h, rf, a, nMer, rings) { const N = 26; for (let k = 0; k < nMer; k++) { const ph = k / nMer * Math.PI * 2 + S.rot, d = Math.cos(ph), pts = []; for (let i = 0; i <= N; i++) { const u = i / N, r = rf(u); pts.push([cxu(u) + Math.sin(ph) * r, y0 - u * h + d * r * TILT]); } glowLine(pts, a * (d > 0 ? 0.85 : 0.22), d > 0 ? 1.2 : 0.9); } rings.forEach(u => { const r = rf(u); if (r > 0.8) ring(cxu(u), y0 - u * h, r, a * 0.9); }); }
 function bodyPath(cxu, y0, h, rf) { x.beginPath(); for (let i = 0; i <= 30; i++) { const u = i / 30; x.lineTo(cxu(u) - rf(u), y0 - u * h); } for (let i = 30; i >= 0; i--) { const u = i / 30; x.lineTo(cxu(u) + rf(u), y0 - u * h); } x.closePath(); }
 function fillBody(cxu, y0, h, rf, col, alpha) { bodyPath(cxu, y0, h, rf); const R = Math.max(rf(0.5), 1), c = cxu(0.5), g = x.createLinearGradient(c - R, 0, c + R, 0); g.addColorStop(0, col + '10'); g.addColorStop(0.45, col + Math.round(Math.min(1, alpha) * 255).toString(16).padStart(2, '0')); g.addColorStop(1, col + '18'); x.fillStyle = g; x.fill(); }
@@ -69,7 +74,7 @@ function drawEngines(p, cx, y0, R, a) {
  const items = lay.map((q, i) => { const ph = S.rot, px = q[0] * Math.cos(ph) - q[1] * Math.sin(ph), pz = q[0] * Math.sin(ph) + q[1] * Math.cos(ph); return { id: p.engines[i], X: cx + px * R * 0.92, Y: y0 + pz * R * TILT * 0.92, d: pz }; }).sort((u, v) => u.d - v.d);
  items.forEach(it => { const E = CARD[it.id], w = Math.min(E.noz, E.vac ? 1.8 : 1) * R * sp * (E.vac ? 1.25 : 1), hh = E.noz * 1.9 * geo.sc * VCOS * (n > 9 ? 0.75 : 1), al = a * (0.45 + 0.55 * (it.d + 1) / 2), t0 = w * 0.32;
   glowLine([[it.X - t0, it.Y], [it.X - w * 0.5, it.Y + hh * 0.45], [it.X - w, it.Y + hh], [it.X + w, it.Y + hh], [it.X + w * 0.5, it.Y + hh * 0.45], [it.X + t0, it.Y]], al, 1);
-  x.beginPath(); x.ellipse(it.X, it.Y + hh, Math.max(w, 0.5), Math.max(w * TILT, 0.3), 0, 0, Math.PI * 2); x.fillStyle = FUEL_OF(E.fuel) + '55'; x.fill(); x.strokeStyle = lineA(al * 0.8); x.stroke(); });
+  x.beginPath(); x.ellipse(it.X, it.Y + hh, Math.max(w, 0.5), Math.max(w * Math.abs(TILT), 0.3), 0, 0, Math.PI * 2); x.fillStyle = FUEL_OF(E.fuel) + '55'; x.fill(); x.strokeStyle = lineA(al * 0.8); x.stroke(); });
 }
 function drawAtt(t, cx, y0, h, R, a, role) {
  for (let k = 0; k < 4; k++) { const ph = k / 4 * Math.PI * 2 + S.rot + Math.PI / 4, s = Math.sin(ph), d = Math.cos(ph), xs = cx + s * R, al = a * (d > 0 ? 0.9 : 0.3), dir = Math.sign(s) || 1;
@@ -94,8 +99,8 @@ function drawDims(L) {
 }
 function drawProjector(tm) {
  const z = VIEW.zoom, cx = geo.cx, by = geo.base + (geo.solo ? 0.06 : 0.02) * H * z * VCOS, r = Math.min(W * 0.32, 230) * Math.min(z, 3), ch = H * 0.8 * z * VCOS;
- const g = x.createRadialGradient(cx, by, 4, cx, by, r * 1.4); g.addColorStop(0, 'rgba(63,240,255,.35)'); g.addColorStop(1, 'rgba(63,240,255,0)'); x.fillStyle = g; x.beginPath(); x.ellipse(cx, by, r * 1.4, r * 0.42, 0, 0, Math.PI * 2); x.fill();
- for (let i = 0; i < 4; i++) { const rr = r * (0.35 + i * 0.22); x.strokeStyle = lineA(0.45 - i * 0.08); x.lineWidth = 1.2; x.setLineDash([12 + i * 6, 8]); x.lineDashOffset = (RM ? 0 : tm / 3000 * (i % 2 ? -1 : 1)) * 60; x.beginPath(); x.ellipse(cx, by, rr, rr * TILT, 0, 0, Math.PI * 2); x.stroke(); } x.setLineDash([]);
+ const g = x.createRadialGradient(cx, by, 4, cx, by, r * 1.4); g.addColorStop(0, 'rgba(63,240,255,.35)'); g.addColorStop(1, 'rgba(63,240,255,0)'); x.fillStyle = g; x.beginPath(); x.ellipse(cx, by, r * 1.4, Math.max(1, r * 1.4 * Math.abs(TILT)), 0, 0, Math.PI * 2); x.fill();
+ for (let i = 0; i < 4; i++) { const rr = r * (0.35 + i * 0.22); x.strokeStyle = lineA(0.45 - i * 0.08); x.lineWidth = 1.2; x.setLineDash([12 + i * 6, 8]); x.lineDashOffset = (RM ? 0 : tm / 3000 * (i % 2 ? -1 : 1)) * 60; x.beginPath(); x.ellipse(cx, by, rr, Math.max(0.5, rr * Math.abs(TILT)), 0, 0, Math.PI * 2); x.stroke(); } x.setLineDash([]);
  const cg = x.createLinearGradient(0, by, 0, by - ch); cg.addColorStop(0, 'rgba(63,240,255,.10)'); cg.addColorStop(1, 'rgba(63,240,255,0)'); x.fillStyle = cg; x.beginPath(); x.moveTo(cx - r * 0.6, by); x.lineTo(cx - r * 0.95, by - ch); x.lineTo(cx + r * 0.95, by - ch); x.lineTo(cx + r * 0.6, by); x.fill();
  if (!RM) for (let i = 0; i < 26; i++) { const ph = (tm / 4000 + i * 0.137) % 1, xx = cx + Math.sin(i * 12.9898) * r * 0.8, yy = by - ph * ch * 0.94; x.fillStyle = lineA(0.5 * (1 - ph)); x.fillRect(xx, yy, 1.6, 1.6); }
 }
