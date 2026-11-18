@@ -1,0 +1,297 @@
+{
+ "app": "holo-assembly",
+ "v": 3,
+ "custom": [
+  {
+   "id": "ex_tank1",
+   "cat": "st",
+   "custom": true,
+   "name": "예시 1단 탱크",
+   "kind": "tank",
+   "desc": "원통 · 알루미늄-리튬 2195 · 40×Ø3.7 m",
+   "part": {
+    "name": "예시 1단 탱크",
+    "role": "tank",
+    "engines": [],
+    "tps": null,
+    "fuel": "kerolox",
+    "att": [],
+    "shape": {
+     "prof": "line",
+     "h": 40,
+     "d0": 3.7,
+     "d1": 3.7,
+     "dm": 4.81,
+     "k": 1.7,
+     "sp": 0.6
+    },
+    "mat": {
+     "id": "al2195",
+     "name": "알루미늄-리튬 2195",
+     "rho": 2710,
+     "E": 76,
+     "Sy": 560,
+     "Su": 600,
+     "Tmax": 150,
+     "k": 90,
+     "cp": 900,
+     "eps": 0.3,
+     "cryo": 1.15,
+     "note": "팰컨 9 · 우주왕복선 외부 탱크"
+    },
+    "t": 4.5,
+    "meop": 3.5,
+    "build": "stringer",
+    "tests": {}
+   }
+  }
+ ],
+ "ships": [
+  {
+   "name": "팰컨형 예시",
+   "t": 1794969676720,
+   "parts": [
+    {
+     "card": "engbay",
+     "name": "엔진부",
+     "role": "engbay",
+     "engines": [
+      "merlin",
+      "merlin",
+      "merlin",
+      "merlin",
+      "merlin",
+      "merlin",
+      "merlin",
+      "merlin",
+      "merlin"
+     ],
+     "tps": null,
+     "fuel": null,
+     "att": [
+      "legs"
+     ],
+     "from": null,
+     "shape": {
+      "prof": "line",
+      "h": 2,
+      "d0": 3.7,
+      "d1": 3.7,
+      "dm": 4.81,
+      "k": 1.7,
+      "sp": 0.6
+     },
+     "mat": {
+      "id": "al2195",
+      "name": "알루미늄-리튬 2195",
+      "rho": 2710,
+      "E": 76,
+      "Sy": 560,
+      "Su": 600,
+      "Tmax": 150,
+      "k": 90,
+      "cp": 900,
+      "eps": 0.3,
+      "cryo": 1.15,
+      "note": "팰컨 9 · 우주왕복선 외부 탱크"
+     },
+     "t": 6,
+     "build": "stringer",
+     "meop": 0.3,
+     "tests": {}
+    },
+    {
+     "card": "tankL",
+     "name": "긴 탱크",
+     "role": "tank",
+     "engines": [],
+     "tps": null,
+     "fuel": "kerolox",
+     "att": [],
+     "from": null,
+     "shape": {
+      "prof": "line",
+      "h": 40,
+      "d0": 3.7,
+      "d1": 3.7,
+      "dm": 4.81,
+      "k": 1.7,
+      "sp": 0.6
+     },
+     "mat": {
+      "id": "al2195",
+      "name": "알루미늄-리튬 2195",
+      "rho": 2710,
+      "E": 76,
+      "Sy": 560,
+      "Su": 600,
+      "Tmax": 150,
+      "k": 90,
+      "cp": 900,
+      "eps": 0.3,
+      "cryo": 1.15,
+      "note": "팰컨 9 · 우주왕복선 외부 탱크"
+     },
+     "t": 4.5,
+     "meop": 3.5,
+     "build": "stringer",
+     "tests": {}
+    },
+    {
+     "card": "inter",
+     "name": "단간부",
+     "role": "inter",
+     "engines": [],
+     "tps": null,
+     "fuel": null,
+     "att": [
+      "gridfin"
+     ],
+     "from": null,
+     "shape": {
+      "prof": "line",
+      "h": 6.5,
+      "d0": 3.7,
+      "d1": 3.7,
+      "dm": 4.81,
+      "k": 1.7,
+      "sp": 0.6
+     },
+     "mat": {
+      "id": "cfrp",
+      "name": "탄소섬유 복합재",
+      "rho": 1600,
+      "E": 70,
+      "Sy": 600,
+      "Su": 600,
+      "Tmax": 120,
+      "k": 5,
+      "cp": 900,
+      "eps": 0.85,
+      "cryo": 0.95,
+      "note": "가장 가벼움 · 수지가 열에 약하고 깨지듯 파손"
+     },
+     "t": 8,
+     "build": "honey",
+     "meop": 0.3,
+     "tests": {}
+    },
+    {
+     "card": "engbay",
+     "name": "엔진부",
+     "role": "engbay",
+     "engines": [
+      "mvac"
+     ],
+     "tps": null,
+     "fuel": null,
+     "att": [],
+     "from": null,
+     "shape": {
+      "prof": "line",
+      "h": 1.6,
+      "d0": 3.7,
+      "d1": 3.7,
+      "dm": 4.81,
+      "k": 1.7,
+      "sp": 0.6
+     },
+     "mat": {
+      "id": "al2195",
+      "name": "알루미늄-리튬 2195",
+      "rho": 2710,
+      "E": 76,
+      "Sy": 560,
+      "Su": 600,
+      "Tmax": 150,
+      "k": 90,
+      "cp": 900,
+      "eps": 0.3,
+      "cryo": 1.15,
+      "note": "팰컨 9 · 우주왕복선 외부 탱크"
+     },
+     "t": 4,
+     "build": "stringer",
+     "meop": 0.3,
+     "tests": {}
+    },
+    {
+     "card": "tankS",
+     "name": "짧은 탱크",
+     "role": "tank",
+     "engines": [],
+     "tps": null,
+     "fuel": "kerolox",
+     "att": [],
+     "from": null,
+     "shape": {
+      "prof": "line",
+      "h": 10,
+      "d0": 3.7,
+      "d1": 3.7,
+      "dm": 4.81,
+      "k": 1.7,
+      "sp": 0.6
+     },
+     "mat": {
+      "id": "al2195",
+      "name": "알루미늄-리튬 2195",
+      "rho": 2710,
+      "E": 76,
+      "Sy": 560,
+      "Su": 600,
+      "Tmax": 150,
+      "k": 90,
+      "cp": 900,
+      "eps": 0.3,
+      "cryo": 1.15,
+      "note": "팰컨 9 · 우주왕복선 외부 탱크"
+     },
+     "t": 3.5,
+     "meop": 3.5,
+     "build": "stringer",
+     "tests": {}
+    },
+    {
+     "card": "fairing",
+     "name": "페어링",
+     "role": "shell",
+     "engines": [],
+     "tps": "cork",
+     "fuel": null,
+     "att": [],
+     "from": null,
+     "shape": {
+      "prof": "bulb",
+      "h": 13.1,
+      "d0": 3.7,
+      "d1": 0,
+      "dm": 5.2,
+      "k": 1.7,
+      "sp": 0.55
+     },
+     "mat": {
+      "id": "cfrp",
+      "name": "탄소섬유 복합재",
+      "rho": 1600,
+      "E": 70,
+      "Sy": 600,
+      "Su": 600,
+      "Tmax": 120,
+      "k": 5,
+      "cp": 900,
+      "eps": 0.85,
+      "cryo": 0.95,
+      "note": "가장 가벼움 · 수지가 열에 약하고 깨지듯 파손"
+     },
+     "t": 6,
+     "build": "honey",
+     "meop": 0.3,
+     "tpsT": 15,
+     "tests": {}
+    }
+   ]
+  }
+ ],
+ "parts": []
+}

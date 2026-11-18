@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>홀로그램 기체 조립대</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;600;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="app">
+ <header>
+  <h1>홀로그램 <span>기체 조립대</span></h1>
+  <p>카드를 끌어 투사대 위 기체에 놓으세요. “새 부품 설계”는 부품 하나만 띄운 작업대에서 모양·재질을 정하고 시험까지 해 볼 수 있어요.</p>
+  <div class="tb">
+   <button class="b" id="exSS">예시: 스타십형</button><button class="b" id="exF9">예시: 팔콘형</button>
+   <button class="b" id="undo">되돌리기</button><button class="b" id="clear">비우기</button><button class="b on" id="spin">자동 회전</button><button class="b hot" id="shipsBtn" aria-expanded="false">내 기체</button>
+  </div>
+  <div class="pop" id="pop" hidden>
+   <h3>기체 저장하기</h3>
+   <div class="save"><input id="shipName" placeholder="기체 이름" maxlength="40"><button class="b hot" id="shipSave">저장</button></div>
+   <ul class="ships" id="ships"></ul>
+   <div class="tb"><button class="b" id="exp">파일로 내보내기</button><button class="b" id="impBtn">파일 가져오기</button><input type="file" id="imp" accept="application/json,.json" hidden></div>
+  </div>
+ </header>
+ <aside class="deck">
+  <div class="cats" id="cats" role="tablist"></div>
+  <div class="cards" id="cards"></div>
+  <div class="editor" id="editor" hidden></div>
+  <p class="hint" id="hint">카드를 눌러도 됩니다: 구조는 맨 위에, 나머지는 선택한 부품에 붙어요. 기체를 끌면 돌아가고, 부품을 두 번 누르면 작업대로 띄워요.</p>
+ </aside>
+ <main class="stage" id="stage">
+  <canvas id="cv"></canvas>
+  <div class="mode" id="mode" hidden></div>
+  <div class="selbox" id="selbox" hidden></div>
+  <div class="hud" id="hud" hidden></div>
+  <div class="empty" id="empty" hidden>투사대가 비어 있어요. 구조 카드나 “새 부품 설계”부터 시작해 보세요</div>
+  <div class="info" id="info"></div>
+  <div class="toast" id="toast"></div>
+ </main>
+</div>
+<script src="js/01-data.js"></script>
+<script src="js/02-shape.js"></script>
+<script src="js/03-state.js"></script>
+<script src="js/04-physics.js"></script>
+<script src="js/05-deck.js"></script>
+<script src="js/06-editor.js"></script>
+<script src="js/07-test-run.js"></script>
+<script src="js/08-render.js"></script>
+<script src="js/09-test-fx.js"></script>
+<script src="js/10-io.js"></script>
+<script src="js/11-input.js"></script>
+<script src="js/12-api.js"></script>
+<!-- 확장 모듈: 각 AI는 자기 파일 한 줄만 여기에 추가합니다 (핵심 파일은 고치지 않기) -->
+<!-- <script src="js/ext/structure-lab.js"></script>   GPT: 구조 시험 시뮬레이션 -->
+<!-- <script src="js/ext/insulation-lab.js"></script>  Gemini: 단열재 실험 -->
+<!-- <script src="js/ext/engine-lab.js"></script>      Grok: 엔진 설계·시험·이미지 -->
+<script src="js/99-boot.js"></script>
+</body>
+</html>
