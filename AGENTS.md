@@ -160,5 +160,7 @@ prompts/                      GPT·Gemini·Grok에게 줄 작업 지시서
 
 ## CHANGELOG
 
+- 2026-11-18 · Gemini + Claude · 단열재 실험 모듈 추가 (Gemini의 다층 열물리 엔진 holo_tps.js를 Claude가 HOLO API에 연결: 다층 단열재 설계 패널, 다층 아크젯·극저온·열진공 시험, 단열재 카드 저장). docs/ext-insulation.md
+- 2026-11-18 · Grok + Claude · 엔진 카드 이미지 8장 추가 (assets/engines, 256px로 축소), 이미지가 있으면 카드에 표시
 - 2026-11-18 · Claude · 확장 모듈 API(HOLO, js/12-api.js) 추가, 부팅을 99-boot.js로 분리, 모든 카테고리의 내 카드·이미지 카드 지원, 세 AI 분담표와 작업 지시서 작성
 - 2026-11-18 · Claude · 카드·홀로그램 조립 방식으로 전면 개편, 구조 설계(모양 7종·치수), 내 카드·내 기체 저장, 작업대 모드, 재질·성질, 구조 시험 5종, 파일을 역할별 11개로 분리, 이 안내서 작성

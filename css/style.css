@@ -36,7 +36,7 @@ header p{margin:0;color:var(--mut);font-size:13px;flex:1 1 240px}
 .card:hover::after{transform:translateX(120%)}
 .card:hover{border-color:var(--holo)}
 .card svg,.card img{width:100%;height:58px;display:block;object-fit:contain}
-.ic{position:relative;display:block}.ic img{position:absolute;inset:0;background:transparent}
+.ic{position:relative;display:block}.ic img{position:absolute;inset:0;margin:auto;width:58px;border-radius:8px;box-shadow:0 0 12px rgba(63,240,255,.25)}.ic.has svg{visibility:hidden}
 .card b{display:block;font-size:13.5px;line-height:1.3;margin-top:4px;color:#f0fdff}
 .card small{display:block;color:var(--mut);font-size:12px;line-height:1.35;margin-top:2px}
 .cbtn{position:absolute;top:6px;z-index:2;border:1px solid #6b5a2a;background:#1a1408;border-radius:999px;font-size:12px;padding:1px 8px;cursor:pointer}
