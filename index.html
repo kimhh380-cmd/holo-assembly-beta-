@@ -15,7 +15,7 @@
   <p>카드를 끌어 투사대 위 기체에 놓으세요. “새 부품 설계”는 부품 하나만 띄운 작업대에서 모양·재질을 정하고 시험까지 해 볼 수 있어요.</p>
   <div class="tb">
    <button class="b" id="exSS">예시: 스타십형</button><button class="b" id="exF9">예시: 팔콘형</button>
-   <button class="b" id="undo">되돌리기</button><button class="b" id="clear">비우기</button><button class="b on" id="spin">자동 회전</button><button class="b hot" id="shipsBtn" aria-expanded="false">내 기체</button>
+   <button class="b" id="undo">되돌리기</button><button class="b" id="clear">비우기</button><button class="b on" id="spin">자동 회전</button><span class="seg" role="group" aria-label="보기"><button class="b" data-look="holo" aria-pressed="true">홀로그램</button><button class="b" data-look="real" aria-pressed="false">실제</button></span><button class="b" id="studioBtn">제작·시험 영상</button><button class="b hot" id="shipsBtn" aria-expanded="false">내 기체</button>
   </div>
   <div class="pop" id="pop" hidden>
    <h3>기체 저장하기</h3>
@@ -58,6 +58,8 @@
 <script src="js/10-io.js"></script>
 <script src="js/11-input.js"></script>
 <script src="js/12-api.js"></script>
+<script src="js/13-real.js"></script>
+<script src="js/14-studio.js"></script>
 <!-- 확장 모듈: 각 AI는 자기 파일 한 줄만 여기에 추가합니다 (핵심 파일은 고치지 않기) -->
 <!-- <script src="js/ext/structure-lab.js"></script>   GPT: 구조 시험 시뮬레이션 -->
 <script src="js/ext/insulation-lab.js"></script><!-- Gemini 엔진 + Claude 연결: 단열재 실험 -->

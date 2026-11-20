@@ -33,8 +33,8 @@ function shapeSvg(s, col, W = 100, H = 60) {
  for (let i = 24; i >= 0; i--) { const u = i / 24; pts.push(`${(cx + rf(u)).toFixed(1)},${(by - u * h).toFixed(1)}`); }
  return `<svg viewBox="0 0 ${W} ${H}"><polygon points="${pts.join(' ')}" fill="${col || 'rgba(63,240,255,.14)'}" fill-opacity=".55" stroke="#3ff0ff" stroke-width="1.6" stroke-linejoin="round"/></svg>`;
 }
-// 카드 그림: 기본 카드는 assets/cards/<id>.png가 있고 CARD_ART에 id가 있으면 그 그림을, 없으면 아래 SVG를 보여 줌. 내 카드는 c.img(데이터 URL)
-const cardImgSrc = c => c ? (c.img || (!c.custom && CARD_ART.has(c.id) ? `assets/cards/${c.id}.png` : null)) : null;
+// 카드 그림: 기본 카드는 홀로그램 보기면 assets/cards/<id>.png(CARD_ART), 실제 보기면 assets/cards/real/<id>.png(CARD_ART_REAL). 없으면 아래 SVG. 내 카드는 c.img(데이터 URL)
+const cardImgSrc = c => c ? (c.img || (c.custom ? null : LOOK === 'real' ? (CARD_ART_REAL.has(c.id) ? `assets/cards/real/${c.id}.png` : null) : (CARD_ART.has(c.id) ? `assets/cards/${c.id}.png` : null))) : null;
 function icon(c) { const src = cardImgSrc(c), svg = iconSvg(c); return src ? `<span class="ic">${svg}<img src="${esc(src)}" alt="" loading="lazy" onload="this.parentNode.classList.add('has')" onerror="this.remove()"></span>` : svg; }
 function iconSvg(c) {
  const s = 'stroke="#3ff0ff" stroke-width="2" fill="rgba(63,240,255,.12)"';

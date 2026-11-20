@@ -49,6 +49,7 @@ function tpsOverlay(cxu, y0, h, rf, t, R) { const T = CARD[t]; if (!T) return; x
 function ringsFor(p) { const s = p.v; if (s.prof === 'ogive') return [0, 0.35, 0.65, 0.85]; if (s.prof === 'dome') return [0, 0.4, 0.75]; if (s.prof === 'bulb') return [0, 0.12, s.sp, (s.sp + 1) / 2]; if (p.role === 'tank') { const n = Math.max(2, Math.min(8, Math.round(s.h / Math.max(s.d0, 0.5) * 1.2))); return Array.from({ length: n + 1 }, (_, i) => i / n); } return [0, 0.5, 1].slice(0, s.h > 0.5 ? 3 : 2); }
 const NOD = { dx: () => 0, rm: () => 1, hm: 1 };
 function drawPart(L, sel, hov, D) {
+ if (LOOK === 'real') return drawPartReal(L, sel, hov, D); // 실제 모습은 13-real.js
  D = D || NOD; const p = L.p, h = (L.y0 - L.y1) * D.hm, y0 = L.y0, a = sel ? 1 : hov ? 0.95 : 0.8, cxu = u => geo.cx + D.dx(u), rf = u => L.rf(u) * D.rm(u), R0 = Math.max(rf(0), 2), R = Math.max(L.mr, 2);
  if ((L.hraw ?? h) < 0.5) return; x.save();
  if (p.fuel && p.role === 'tank') fillBody(cxu, y0, h, u => rf(u) * 0.93, FUEL_OF(p.fuel), 0.35 + 0.08 * Math.sin(performance.now() / 600)); else fillBody(cxu, y0, h, rf, '#3ff0ff', 0.06);
@@ -73,6 +74,7 @@ function drawEngines(p, cx, y0, R, a) {
  const n = p.engines.length, lay = engLayout(n), sp = n <= 1 ? 1 : n <= 4 ? 0.6 : n <= 9 ? 0.42 : n <= 20 ? 0.3 : 0.17;
  const items = lay.map((q, i) => { const ph = S.rot, px = q[0] * Math.cos(ph) - q[1] * Math.sin(ph), pz = q[0] * Math.sin(ph) + q[1] * Math.cos(ph); return { id: p.engines[i], X: cx + px * R * 0.92, Y: y0 + pz * R * TILT * 0.92, d: pz }; }).sort((u, v) => u.d - v.d);
  items.forEach(it => { const E = CARD[it.id], w = Math.min(E.noz, E.vac ? 1.8 : 1) * R * sp * (E.vac ? 1.25 : 1), hh = E.noz * 1.9 * geo.sc * VCOS * (n > 9 ? 0.75 : 1), al = a * (0.45 + 0.55 * (it.d + 1) / 2), t0 = w * 0.32;
+  if (typeof engWire === 'function' && engWire(it, E, w, hh, al)) return; // 엔진별 모양(Grok 그림 윤곽, 13-real.js)
   glowLine([[it.X - t0, it.Y], [it.X - w * 0.5, it.Y + hh * 0.45], [it.X - w, it.Y + hh], [it.X + w, it.Y + hh], [it.X + w * 0.5, it.Y + hh * 0.45], [it.X + t0, it.Y]], al, 1);
   x.beginPath(); x.ellipse(it.X, it.Y + hh, Math.max(w, 0.5), Math.max(w * Math.abs(TILT), 0.3), 0, 0, Math.PI * 2); x.fillStyle = FUEL_OF(E.fuel) + '55'; x.fill(); x.strokeStyle = lineA(al * 0.8); x.stroke(); });
 }
@@ -98,6 +100,7 @@ function drawDims(L) {
  x.restore();
 }
 function drawProjector(tm) {
+ if (LOOK === 'real') return drawStudio(tm);
  const z = VIEW.zoom, cx = geo.cx, by = geo.base + (geo.solo ? 0.06 : 0.02) * H * z * VCOS, r = Math.min(W * 0.32, 230) * Math.min(z, 3), ch = H * 0.8 * z * VCOS;
  const g = x.createRadialGradient(cx, by, 4, cx, by, r * 1.4); g.addColorStop(0, 'rgba(63,240,255,.35)'); g.addColorStop(1, 'rgba(63,240,255,0)'); x.fillStyle = g; x.beginPath(); x.ellipse(cx, by, r * 1.4, Math.max(1, r * 1.4 * Math.abs(TILT)), 0, 0, Math.PI * 2); x.fill();
  for (let i = 0; i < 4; i++) { const rr = r * (0.35 + i * 0.22); x.strokeStyle = lineA(0.45 - i * 0.08); x.lineWidth = 1.2; x.setLineDash([12 + i * 6, 8]); x.lineDashOffset = (RM ? 0 : tm / 3000 * (i % 2 ? -1 : 1)) * 60; x.beginPath(); x.ellipse(cx, by, rr, Math.max(0.5, rr * Math.abs(TILT)), 0, 0, Math.PI * 2); x.stroke(); } x.setLineDash([]);

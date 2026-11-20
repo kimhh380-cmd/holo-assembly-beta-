@@ -65,8 +65,8 @@ function frameBody(tm) {
  x.clearRect(0, 0, W, H); x.save(); if (shake && !RM) x.translate((Math.random() - 0.5) * shake, (Math.random() - 0.5) * shake);
  applyView(); computeLayout(solo && E ? [E] : S.parts, solo); drawProjector(tm);
  x.save(); rollIn();
- x.save(); if (!RM) x.globalAlpha = 0.92 + 0.08 * Math.sin(tm / 90) * Math.sin(tm / 37);
- layout.forEach(L => { const D = T && solo && L.p === T.p ? testDeform(L, Math.min(tau, 1), tm) : null; if (T && solo && L.p === T.p && (T.kind === 'press' && !TEST_EXT.press || T.R.hidePart) && T.R.failAt != null && tau >= T.R.failAt) return; drawPart(L, !solo && (L.p.uid === S.sel || (E && L.p === E)), S.hover && S.hover.uid === L.p.uid, D); });
+ x.save(); if (!RM && LOOK !== 'real') x.globalAlpha = 0.92 + 0.08 * Math.sin(tm / 90) * Math.sin(tm / 37);
+ (LOOK === 'real' && TILT < 0 ? layout.slice().reverse() : layout).forEach(L => { /* 실제 모습은 가까운 부품을 나중에 (아래에서 보면 위부터) */ const D = T && solo && L.p === T.p ? testDeform(L, Math.min(tau, 1), tm) : null; if (T && solo && L.p === T.p && (T.kind === 'press' && !TEST_EXT.press || T.R.hidePart) && T.R.failAt != null && tau >= T.R.failAt) return; drawPart(L, !solo && (L.p.uid === S.sel || (E && L.p === E)), S.hover && S.hover.uid === L.p.uid, D); });
  x.restore();
  if (T && solo && layout[0]) drawRig(layout[0], Math.min(tau, 1), tm, dt);
  const SL = solo ? (!T ? layout[0] : null) : layout.find(L => L.p.uid === S.sel || L.p === E); if (SL) drawDims(SL);

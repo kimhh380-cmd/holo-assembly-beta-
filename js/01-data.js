@@ -66,8 +66,12 @@ const BUILTIN = [
  { id: 'flaps', cat: 'at', name: '공력 플랩', desc: '배면 재진입 때 자세를 잡는 날개', kind: 'att' },
  { id: 'fins', cat: 'at', name: '안정 핀', desc: '꼬리를 뒤로 유지하는 삼각 날개', kind: 'att' },
 ];
-// assets/cards/에 그림이 있는 카드 id 목록 (그림을 추가하면 여기에도 id를 넣기 — 없는 그림을 불러오는 오류를 막음)
-const CARD_ART = new Set(['raptor', 'raptorvac', 'merlin', 'mvac', 'rs25', 'rl10', 'be4', 'srb', 'hex', 'pica', 'cork', 'blanket', 'foam', 'mli', 'rcc']);
+// 보기: 'holo'(홀로그램) 또는 'real'(실제 모습). 머리의 [홀로그램 | 실제] 버튼으로 바꾸고 localStorage 'holo.look'에 저장 (13-real.js)
+let LOOK = (() => { try { return localStorage.getItem('holo.look') === 'real' ? 'real' : 'holo'; } catch (e) { return 'holo'; } })();
+// 그림이 있는 카드 id 목록 (그림을 추가하면 여기에도 id를 넣기 — 없는 그림을 불러오는 오류를 막음)
+// 홀로그램 그림: assets/cards/<id>.png · 실제 그림: assets/cards/real/<id>.png
+const CARD_ART = new Set(['nose', 'fairing', 'capsule', 'tankS', 'tankM', 'tankL', 'adapter', 'inter', 'hotring', 'engbay', 'raptor', 'raptorvac', 'merlin', 'mvac', 'rs25', 'rl10', 'be4', 'srb', 'hex', 'pica', 'cork', 'blanket', 'foam', 'mli', 'rcc', 'methalox', 'kerolox', 'hydrolox', 'hyper', 'solid', 'gridfin', 'legs', 'flaps', 'fins']);
+const CARD_ART_REAL = new Set(CARD_ART);
 const CATS = [['st', '구조'], ['en', '엔진'], ['tp', '단열재'], ['fu', '연료'], ['at', '부착물']];
 const TESTS = [
  ['press', '압력', '물이나 액체질소를 채우고 압력을 올려 보증 압력(운용의 1.1배)과 요구 파열 압력(1.4배)을 확인해요.'],

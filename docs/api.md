@@ -78,7 +78,7 @@
 - `HOLO.registerCard(def)`: 기본 카드를 추가하거나 대체합니다(같은 id면 대체). `cat`은 `st` `en` `tp` `fu` `at` 중 하나입니다.
   - **엔진** (`cat:'en'`, `kind:'engine'`): `fuel`(FUELC 키), `noz`(노즐 길이 계수, 0.8~1.7), `m`(질량 t), `vac`(진공형이면 true)가 필요합니다. 그 밖의 설계값은 자유롭게 더해도 됩니다.
   - **단열재** (`cat:'tp'`, `kind:'tps'`): `col`, `pat`(`hex` `speck` `dots` `quilt` `none` `sheen` `weave`), `tk`(W/m·K), `trho`(kg/m³), `tcp`, `tT`(°C 한계), `teps`, `tdef`(기본 두께 mm)가 필요합니다. 삭마 재료면 `abl:true, tA, Qs`도 넣습니다.
-  - **그림:** 기본 카드는 `assets/cards/<카드id>.png`가 있고 `CARD_ART`(js/01-data.js)에 id가 있으면 그 그림이 나옵니다. 확장 모듈은 `HOLO.data`가 아니라 카드의 `img`로 지정하세요. 다른 경로를 쓰려면 `img: '경로 또는 데이터 URL'`을 넣으세요. 내 카드(`saveCustomCard`)에도 `img`를 넣을 수 있습니다.
+  - **그림:** 기본 카드는 홀로그램 보기에서 `assets/cards/<카드id>.png`(`CARD_ART`), 실제 보기에서 `assets/cards/real/<카드id>.png`(`CARD_ART_REAL`)가 나옵니다(js/01-data.js). 지금 보기는 전역 `LOOK`('holo' | 'real')이고, 실제 모드 그리기는 js/13-real.js입니다. `onDraw` 훅에서 `LOOK === 'real'`이면 홀로그램 효과를 줄이는 게 좋아요. 확장 모듈은 `HOLO.data`가 아니라 카드의 `img`로 지정하세요. 다른 경로를 쓰려면 `img: '경로 또는 데이터 URL'`을 넣으세요. 내 카드(`saveCustomCard`)에도 `img`를 넣을 수 있습니다.
 - `HOLO.saveCustomCard(card)`: 사용자가 만든 카드를 "내 카드"로 저장합니다. 덱의 해당 카테고리 맨 앞에 나오고, localStorage와 파일 내보내기에 포함됩니다. 반환값은 id입니다.
 - `HOLO.removeCustomCard(id)`
 - `HOLO.registerMaterial(id, { name, rho, E, Sy, Su, Tmax, k, cp, eps, cryo, note })`: 구조 재질을 추가합니다.
@@ -106,6 +106,27 @@
   - 형식·화면: `esc` `fix` `m1` `nf(값, 소수자리)` `n0` `toast` `snap` `touched`
   - 계산: `massOf(part)` → `{A,V,st,tps,prop,eng,dry,tot}`, `geomM` `maxR` `rfOf` `sigcr` `ramp` `firstCross(f, cap)` `plasmaSim` `aboveMass` `armLen` `inStack`
   - 그리기: `bb(°C)` → 빛 색, `stressTint` `glowLine(pts, alpha, width)` `ring` `label(text, x, y, color, 'r')` `lineA` `shapeSvg`
+
+## 4-1. 제작·시험 영상 — `HOLO.registerScene(def)`
+
+영상관(js/14-studio.js)에 장면을 더합니다. 장면은 시간 `t`(초)만으로 그려야 해요(되감기·건너뛰기를 해도 같은 화면).
+
+```js
+HOLO.registerScene({
+  id: 'en_hotfire2', cat: 'test',            // cat: 'make'(만들기) | 'test'(시험하기) | 그 밖은 '확장'
+  name: '터보펌프 시험', desc: '한 줄 설명', dur: 30,
+  opts: ['eng'],                               // 'eng'(엔진 고르기) · 'tps'(단열재) · 'ship'(기체) 중 필요한 것
+  steps: [[0, '설치', '설명…'], [8, '시동', c => `${c.eng} 시동`]],   // [시작 초, 제목, 설명]. 함수도 됨 (c = 장면 정보)
+  draw(t, c, { g, real, VW, VH }) {          // g = 캔버스 컨텍스트, 가상 화면 1000×560
+    const T = HOLO.studio;                     // 그리기 도구: bg, box, poly, revV, engine, ship, plume, cloud, sparks, jets, tag, panel, graph, big, check, crane, seg, ez …
+    T.bg('lab'); T.engine(500, 100, 300, c.eng); T.tag(500, 200, 650, 150, '터보펌프', T.seg(t, 1, 2));
+  },
+});
+```
+
+- `c`(장면 정보): `parts`(기체), `sel`(고른 부품), `eng`(엔진 id), `tps`(단열재 id), `tpsT`(두께 mm), `mat`(재질), `meop`, `nEng`(1단 엔진 수), `engId`.
+- 홀로그램/실제 보기는 도구가 알아서 바꿔 그려요. 직접 칠할 때는 세 번째 인자의 `real`을 보세요.
+- 열기: `HOLO.openStudio('장면 id')`.
 
 ## 5. 확인 방법
 

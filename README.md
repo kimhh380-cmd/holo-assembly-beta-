@@ -63,7 +63,8 @@ CLAUDE.md, GEMINI.md AGENTS.md를 가리키는 짧은 파일
 prompts/             AI별 작업 지시서 (GPT·Gemini·Grok·공통)
 docs/api.md          확장 모듈 API(HOLO)
 js/12-api.js, js/99-boot.js, js/ext/_template.js  확장 API·시작·견본 모듈
-assets/cards/        카드 그림(PNG, 파일 이름 = 카드 id) — Grok이 그린 그림
+assets/cards/        카드 그림(PNG, 파일 이름 = 카드 id) — 홀로그램 보기용 (엔진은 Grok 그림)
+assets/cards/real/   실제 보기용 카드 그림
 docs/data-format.md  카드·부품 JSON 형식
 docs/physics.md      시험 공식과 가정
 examples/example-cards.json  가져오기 예시
